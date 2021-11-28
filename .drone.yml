@@ -9,3 +9,13 @@ steps:
       - rustup component add llvm-tools-preview
       - rustup component add rust-src
       - cargo bootimage
+
+  - name: release
+    image: plugins/gitea-release
+    settings:
+      api_key:
+        from_secret: api_key
+      base_url: http://gitea_web_1:3000
+      files: target/x86_64-julios/debug/bootimage-julios.bin
+    when:
+      event: tag
