@@ -1,5 +1,9 @@
-[target.'cfg(target_os = "linux")']
-rustflags = ["-C", "link-arg=-nostartfiles"]
+[build]
+target = "x86_64-julios.json"
 
 [unstable]
+build-std-features = ["compiler-builtins-mem"]
 build-std = ["core", "compiler_builtins"]
+
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
