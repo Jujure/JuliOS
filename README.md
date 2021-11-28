@@ -1,3 +1,3 @@
 # JuliOS
 
-Just an Unstable, Lame and Innefective Operation System
+Just an Unstable, Lame and Innefective Operating System
