@@ -1,0 +1,11 @@
+kind: pipeline
+name: build
+
+steps:
+  - name: build
+    image: rustlang/rust:nightly
+    commands:
+      - cargo install bootimage
+      - rustup component add llvm-tools-preview
+      - rustup component add rust-src
+      - cargo bootimage
