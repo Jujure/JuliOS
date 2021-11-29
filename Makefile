@@ -9,6 +9,8 @@ LIB_JULIOS = target/x86_64-julios/debug/libjulios.a
 
 GRUB_CFG = grub/grub.cfg
 
+SRC = src/lib.rs
+
 all: $(ISO)
 
 $(ISO): install
@@ -23,7 +25,7 @@ install: $(KERNEL) $(GRUB_CFG)
 $(KERNEL): $(LIB_JULIOS) $(LINKER_SCRIPT) $(BOOT_OBJS)
 	ld -n -T $(LINKER_SCRIPT) -o $(KERNEL) $(BOOT_OBJS) $(LIB_JULIOS)
 
-$(LIB_JULIOS):
+$(LIB_JULIOS): $(SRC)
 	cargo build
 
 

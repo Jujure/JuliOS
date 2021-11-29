@@ -3,3 +3,5 @@ iso
 *.iso
 *.o
 julios
+.gdb_history
+peda-session-julios.txt
