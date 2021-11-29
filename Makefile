@@ -14,7 +14,7 @@ SRC = src/lib.rs
 all: $(ISO)
 
 $(ISO): install
-	./tools/create-iso.sh $@ $(INSTALL_ROOT)
+	grub-mkrescue -o $@ $(INSTALL_ROOT)
 
 install: $(KERNEL) $(GRUB_CFG)
 	mkdir -p $(ABS_INSTALL)
