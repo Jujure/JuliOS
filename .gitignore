@@ -1,1 +1,5 @@
 /target
+iso
+*.iso
+*.o
+julios

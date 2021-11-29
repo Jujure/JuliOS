@@ -10,7 +10,7 @@ fn panic(_info: &core::panic::PanicInfo) -> !
 static HELLO: &[u8] = b"Welcome to the JuliOS";
 
 #[no_mangle]
-pub extern "C" fn _start() -> !
+pub extern "C" fn julios_main() -> !
 {
     let vga_buffer: *mut u8 = 0xb8000 as *mut u8;
 
