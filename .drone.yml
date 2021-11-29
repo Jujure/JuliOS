@@ -3,12 +3,10 @@ name: build
 
 steps:
   - name: build
-    image: rustlang/rust:nightly
+    image: turboregistry:5000/juju/turbo-ci-arch
     commands:
-      - cargo install bootimage
-      - rustup component add llvm-tools-preview
       - rustup component add rust-src
-      - cargo bootimage
+      - make
 
   - name: release
     image: plugins/gitea-release
@@ -16,6 +14,6 @@ steps:
       api_key:
         from_secret: api_key
       base_url: http://gitea_web_1:3000
-      files: target/x86_64-julios/debug/bootimage-julios.bin
+      files: julios.iso
     when:
       event: tag
