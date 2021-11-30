@@ -13,6 +13,12 @@ SRC = src/lib.rs
 
 all: $(ISO)
 
+run: $(ISO)
+	qemu-system-x86_64 -cdrom $<
+
+debug: $(ISO)
+	bochs -q
+
 $(ISO): install
 	grub-mkrescue -o $@ $(INSTALL_ROOT)
 
@@ -38,4 +44,4 @@ clean:
 	$(RM) julios.iso
 	$(RM) -r iso
 
-.PHONY: $(INSTALL_ROOT) install clean all
+.PHONY: $(INSTALL_ROOT) install clean all run debug
