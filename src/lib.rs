@@ -1,17 +1,20 @@
 #![no_std]
 #![no_main]
 
+use core::panic::PanicInfo;
+
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+fn panic_handler(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }
 
-use core::fmt::Write;
 mod vga;
 
 #[no_mangle]
 pub extern "C" fn julios_main() -> ! {
-    vga::WRITER.lock().write_str("Hello").unwrap();
-    write!(vga::WRITER.lock(), " {}!\n{}", "World", "***JuliOS***").unwrap();
+    println!("Hello World!");
+    println!("{}", "***JuliOS***");
+    panic!("Test panick");
     loop {}
 }
