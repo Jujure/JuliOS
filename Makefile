@@ -12,7 +12,7 @@ GRUB_CFG = grub/grub.cfg
 all: $(ISO)
 
 run: $(ISO)
-	qemu-system-x86_64 -cdrom $<
+	qemu-system-x86_64 -cdrom $< -serial stdio
 
 debug: $(ISO)
 	bochs -q

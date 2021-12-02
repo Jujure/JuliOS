@@ -1,7 +1,7 @@
-use volatile::Volatile;
 use core::fmt;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use volatile::Volatile;
 
 const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
@@ -9,7 +9,7 @@ const BUFFER_WIDTH: usize = 80;
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column: 0,
-        color_code: ColorCode::new(Color::LightBlue, Color::Black),
+        color_code: ColorCode::new(Color::LightGreen, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut VgaBuffer) }
     });
 }
@@ -33,7 +33,6 @@ pub fn _print(args: fmt::Arguments) {
 pub fn change_color(fg: Color, bg: Color) {
     WRITER.lock().change_color(ColorCode::new(fg, bg))
 }
-
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,7 +89,7 @@ impl Writer {
         for byte in s.bytes() {
             match byte {
                 0x20..=0x7e | b'\n' => self.write_byte(byte),
-                _ => self.write_byte(0xfe)
+                _ => self.write_byte(0xfe),
             }
         }
     }
@@ -109,7 +108,7 @@ impl Writer {
                 let color_code = self.color_code;
                 self.buffer.chars[row][col].write(VgaChar {
                     character: byte,
-                    color_code
+                    color_code,
                 });
                 self.column += 1;
             }
@@ -130,7 +129,7 @@ impl Writer {
     fn clear_row(&mut self, row: usize) {
         let blank = VgaChar {
             character: b' ',
-            color_code: self.color_code
+            color_code: self.color_code,
         };
         for col in 0..BUFFER_WIDTH {
             self.buffer.chars[row][col].write(blank);

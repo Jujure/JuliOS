@@ -2,6 +2,7 @@
 #![no_main]
 
 mod vga;
+mod serial;
 use core::panic::PanicInfo;
 use vga::Color;
 
@@ -12,11 +13,10 @@ fn panic_handler(info: &PanicInfo) -> ! {
     loop {}
 }
 
-
 #[no_mangle]
 pub extern "C" fn julios_main() -> ! {
     println!("Hello World!");
     println!("{}", "***JuliOS***");
-    panic!("Test panic");
-    loop {}
+    serial_println!("Test serial");
+    panic!("Kernel end of flow");
 }
