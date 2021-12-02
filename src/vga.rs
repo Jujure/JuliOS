@@ -9,7 +9,7 @@ const BUFFER_WIDTH: usize = 80;
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column: 0,
-        color_code: ColorCode::new(Color::Green, Color::Black),
+        color_code: ColorCode::new(Color::LightBlue, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut VgaBuffer) }
     });
 }
@@ -29,6 +29,9 @@ macro_rules! println {
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
+}
+pub fn change_color(fg: Color, bg: Color) {
+    WRITER.lock().change_color(ColorCode::new(fg, bg))
 }
 
 
@@ -132,6 +135,10 @@ impl Writer {
         for col in 0..BUFFER_WIDTH {
             self.buffer.chars[row][col].write(blank);
         }
+    }
+
+    fn change_color(&mut self, color: ColorCode) {
+        self.color_code = color;
     }
 }
 
