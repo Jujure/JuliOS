@@ -4,7 +4,7 @@ INSTALL_ROOT = iso
 ABS_INSTALL = $(abspath $(INSTALL_ROOT))
 
 LINKER_SCRIPT = src/linker.ld
-BOOT_OBJS = src/multiboot.o src/boot.o
+BOOT_OBJS = src/boot/multiboot.o src/boot/boot.o
 LIB_JULIOS = target/x86_64-julios/debug/libjulios.a
 
 GRUB_CFG = grub/grub.cfg
