@@ -1,10 +1,19 @@
-use uart_16550::SerialPort;
+use core::fmt;
 use spin::Mutex;
 use lazy_static::lazy_static;
+use x86_64::instructions::port::Port;
+
+const COM1: u16 = 0x3f8;
+#[allow(dead_code)]
+const COM2: u16 = 0x2f8;
+#[allow(dead_code)]
+const COM3: u16 = 0x3e8;
+#[allow(dead_code)]
+const COM4: u16 = 0x2e8;
 
 lazy_static! {
     pub static ref SERIAL1: Mutex<SerialPort> = {
-        let mut serial_port = unsafe { SerialPort::new(0x3F8) };
+        let mut serial_port = SerialPort::new(COM1);
         serial_port.init();
         Mutex::new(serial_port)
     };
@@ -31,4 +40,38 @@ macro_rules! serial_println {
     ($fmt:expr) => ($crate::serial_print!(concat!($fmt, "\n")));
     ($fmt:expr, $($arg:tt)*) => ($crate::serial_print!(
         concat!($fmt, "\n"), $($arg)*));
+}
+
+pub struct SerialPort {
+    base: Port<u8>,
+}
+
+impl SerialPort {
+    pub fn new(port: u16) -> SerialPort {
+        SerialPort {
+            base: Port::new(port)
+        }
+    }
+
+    fn write_byte(&mut self, byte: u8) {
+        unsafe {
+            self.base.write(byte);
+        }
+    }
+
+    fn write_string(&mut self, s: &str) {
+        for byte in s.bytes() {
+            self.write_byte(byte);
+        }
+    }
+
+    fn init(&mut self) {
+    }
+}
+
+impl fmt::Write for SerialPort {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.write_string(s);
+        Ok(())
+    }
 }
