@@ -15,7 +15,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn julios_main() -> ! {
-    println!("***JuliOS***");
+    println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
     panic!("Kernel end of flow");
 }

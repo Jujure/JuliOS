@@ -11,6 +11,9 @@ const COM3: u16 = 0x3e8;
 #[allow(dead_code)]
 const COM4: u16 = 0x2e8;
 
+
+const EMPTY_TRANSMITTER: u8 = 0x1 << 5;
+
 lazy_static! {
     pub static ref SERIAL1: Mutex<SerialPort> = {
         let mut serial_port = SerialPort::new(COM1);
@@ -47,25 +50,40 @@ macro_rules! serial_println {
 
 pub struct SerialPort {
     base: Port<u8>,
+    line_status: Port<u8>,
 }
 
 impl SerialPort {
     pub fn new(port: u16) -> SerialPort {
         SerialPort {
             base: Port::new(port),
+            line_status: Port::new(port + 5),
         }
     }
 
-    fn write_byte(&mut self, byte: u8) {
+    fn write_byte(&mut self, byte: u8) -> bool {
         unsafe {
-            self.base.write(byte);
+            let status: u8 = self.line_status.read();
+            match status & EMPTY_TRANSMITTER {
+                0 => false,
+                _ => {
+                    self.base.write(byte);
+                    true
+                }
+            }
         }
     }
 
-    fn write_string(&mut self, s: &str) {
+    fn write_string(&mut self, s: &str) -> usize {
+        let mut len: usize = 0;
         for byte in s.bytes() {
-            self.write_byte(byte);
+            let written: bool = self.write_byte(byte);
+            if !written {
+                return len;
+            }
+            len += 1;
         }
+        len
     }
 
     fn init(&mut self) {}
@@ -73,7 +91,10 @@ impl SerialPort {
 
 impl fmt::Write for SerialPort {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        self.write_string(s);
-        Ok(())
+        let len: usize = self.write_string(s);
+        match len {
+            l if l == s.len() => Ok(()),
+            _ => Err(fmt::Error)
+        }
     }
 }
