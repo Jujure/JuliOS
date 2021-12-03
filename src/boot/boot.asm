@@ -164,7 +164,7 @@ p2_table:
     resb 4096
 
 stack_bottom:
-    resb 4096
+    resb 65536
 stack_top:
 
 
@@ -184,7 +184,5 @@ long_mode_start:
     extern julios_main
     call julios_main
 
-    mov rax, 0x2f592f412f4b2f4f
-    mov qword [0xb8000], rax
 .loop:
     jmp .loop

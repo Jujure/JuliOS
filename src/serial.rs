@@ -16,7 +16,7 @@ const ENABLE_TRANSMITTER: u8 = 0x1 << 1;
 const FIFO: u8 = 0x1;
 const TRIGGER_LVL_14: u8 = 0x3 << 6;
 const CLEAR_TRANSMIT_FIFO: u8 = 0x1 << 2;
-const CLEAR_REVEIVE_FIFO: u8 = 0x1 << 1;
+const CLEAR_RECEIVE_FIFO: u8 = 0x1 << 1;
 
 const NO_PARITY: u8 = 0x0;
 const EIGHT_BITS_LENGTH: u8 = 0x3;
@@ -118,7 +118,7 @@ impl SerialPort {
         unsafe {
             self.line_control.write(NO_PARITY | EIGHT_BITS_LENGTH);
             self.fifo_control
-                .write(FIFO | TRIGGER_LVL_14 | CLEAR_TRANSMIT_FIFO | CLEAR_REVEIVE_FIFO);
+                .write(FIFO | TRIGGER_LVL_14 | CLEAR_TRANSMIT_FIFO | CLEAR_RECEIVE_FIFO);
             self.interrupt_enable.write(ENABLE_TRANSMITTER);
         }
     }

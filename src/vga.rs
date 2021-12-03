@@ -30,8 +30,11 @@ pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
-pub fn change_color(fg: Color, bg: Color) {
-    WRITER.lock().change_color(ColorCode::new(fg, bg))
+pub fn change_color(color: ColorCode) {
+    WRITER.lock().change_color(color)
+}
+pub fn get_color() -> ColorCode {
+    WRITER.lock().get_color()
 }
 
 #[allow(dead_code)]
@@ -58,10 +61,10 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-struct ColorCode(u8);
+pub struct ColorCode(u8);
 
 impl ColorCode {
-    fn new(fg: Color, bg: Color) -> ColorCode {
+    pub fn new(fg: Color, bg: Color) -> ColorCode {
         ColorCode((bg as u8) << 4 | (fg as u8))
     }
 }
@@ -138,6 +141,10 @@ impl Writer {
 
     fn change_color(&mut self, color: ColorCode) {
         self.color_code = color;
+    }
+
+    fn get_color(&mut self) -> ColorCode {
+        self.color_code
     }
 }
 
