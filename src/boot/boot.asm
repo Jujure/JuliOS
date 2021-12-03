@@ -163,8 +163,9 @@ p3_table:
 p2_table:
     resb 4096
 
+section .stack
 stack_bottom:
-    resb 65536
+    resb 0x800000
 stack_top:
 
 
