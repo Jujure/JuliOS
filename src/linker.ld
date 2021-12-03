@@ -9,6 +9,16 @@ SECTIONS {
         *(.multiboot_header)
     }
 
+    .stack :
+    {
+        *(.stack)
+    }
+
+    .bss :
+    {
+        *(.bss)
+    }
+
     .text :
     {
         *(.text)
