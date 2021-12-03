@@ -1,8 +1,8 @@
 #![no_std]
 #![no_main]
 
-mod vga;
 mod serial;
+mod vga;
 use core::panic::PanicInfo;
 use vga::Color;
 
@@ -15,8 +15,7 @@ fn panic_handler(info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn julios_main() -> ! {
-    println!("Hello World!");
-    println!("{}", "***JuliOS***");
-    serial_println!("Test serial");
+    println!("***JuliOS***");
+    serial_println!("Hello serial");
     panic!("Kernel end of flow");
 }

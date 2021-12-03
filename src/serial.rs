@@ -1,6 +1,6 @@
 use core::fmt;
-use spin::Mutex;
 use lazy_static::lazy_static;
+use spin::Mutex;
 use x86_64::instructions::port::Port;
 
 const COM1: u16 = 0x3f8;
@@ -22,7 +22,10 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: ::core::fmt::Arguments) {
     use core::fmt::Write;
-    SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+    SERIAL1
+        .lock()
+        .write_fmt(args)
+        .expect("Printing to serial failed");
 }
 
 /// Prints to the host through the serial interface.
@@ -49,7 +52,7 @@ pub struct SerialPort {
 impl SerialPort {
     pub fn new(port: u16) -> SerialPort {
         SerialPort {
-            base: Port::new(port)
+            base: Port::new(port),
         }
     }
 
@@ -65,8 +68,7 @@ impl SerialPort {
         }
     }
 
-    fn init(&mut self) {
-    }
+    fn init(&mut self) {}
 }
 
 impl fmt::Write for SerialPort {
