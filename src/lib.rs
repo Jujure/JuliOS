@@ -29,11 +29,7 @@ pub fn init() {
 pub extern "C" fn julios_main() -> ! {
     init();
     println!("***JuliOS V0.1.0***");
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
-
-    stack_overflow();
+    serial_println!("Hello serial");
 
     panic!("Kernel end of flow");
 }

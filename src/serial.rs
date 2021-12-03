@@ -93,9 +93,9 @@ impl SerialPort {
     fn write_string(&mut self, s: &str) -> usize {
         let mut len: usize = 0;
         for byte in s.bytes() {
-            let written: bool = self.write_byte(byte);
-            if !written {
-                return len;
+            let mut written: bool = self.write_byte(byte);
+            while !written {
+                written = self.write_byte(byte);
             }
             len += 1;
         }
