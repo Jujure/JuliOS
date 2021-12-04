@@ -28,8 +28,6 @@ pub fn init() {
     println!("Starting init");
     gdt::init_gdt();
     interrupts::init_idt();
-    unsafe { interrupts::PICS.lock().initialize() };
-    x86_64::instructions::interrupts::enable();
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
 }
 
