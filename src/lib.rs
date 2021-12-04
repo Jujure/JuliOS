@@ -14,7 +14,13 @@ use vga::{Color, ColorCode};
 fn panic_handler(info: &PanicInfo) -> ! {
     vga::change_color(ColorCode::new(Color::LightRed, Color::Black));
     println!("{}", info);
-    loop {}
+    hlt_loop();
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 pub fn init() {
