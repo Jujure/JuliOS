@@ -1,4 +1,5 @@
 use crate::gdt;
+use crate::hlt_loop;
 use crate::vga::{self, Color, ColorCode};
 use crate::{print, println};
 use lazy_static::lazy_static;
@@ -6,6 +7,7 @@ use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use pic8259::ChainedPics;
 use spin::{self, Mutex};
 use x86_64::instructions::port::Port;
+use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub const PIC_1_OFFSET: u8 = 32;
@@ -37,6 +39,7 @@ lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
         idt.breakpoint.set_handler_fn(breakpoint_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
         unsafe {
             idt.double_fault
                 .set_handler_fn(double_fault_handler)
@@ -66,6 +69,22 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     vga::change_color(color);
 }
 
+extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    let color: vga::ColorCode = vga::get_color();
+    vga::change_color(ColorCode::new(Color::LightRed, Color::Black));
+    use x86_64::registers::control::Cr2;
+
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    vga::change_color(color);
+    hlt_loop();
+}
+
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     _error_code: u64,
@@ -74,7 +93,7 @@ extern "x86-interrupt" fn double_fault_handler(
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    print!(".");
+    // print!(".");
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
@@ -83,10 +102,9 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     lazy_static! {
-        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
-            Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1,
-                HandleControl::Ignore)
-            );
+        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
+            Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore)
+        );
     }
 
     let mut keyboard = KEYBOARD.lock();
