@@ -41,5 +41,6 @@ clean:
 	$(RM) $(KERNEL)
 	$(RM) julios.iso
 	$(RM) -r iso
+	$(RM) -r target
 
 .PHONY: $(INSTALL_ROOT) install clean all run debug $(LIB_JULIOS)
