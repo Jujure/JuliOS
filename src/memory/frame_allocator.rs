@@ -16,7 +16,13 @@ pub struct AreaFrameAllocator {
 }
 
 impl AreaFrameAllocator {
-    pub fn new(kernel_start: u64, kernel_end: u64, multiboot_start: u64, multiboot_end: u64, memory_areas: MemoryAreaIter) -> AreaFrameAllocator {
+    pub fn new(
+        kernel_start: u64,
+        kernel_end: u64,
+        multiboot_start: u64,
+        multiboot_end: u64,
+        memory_areas: MemoryAreaIter,
+    ) -> AreaFrameAllocator {
         let mut allocator = AreaFrameAllocator {
             next_free_frame: Frame::containing_address(PhysAddr::new(0)),
             current_area: None,
@@ -38,7 +44,7 @@ impl AreaFrameAllocator {
                 let address = area.base_addr + area.length - 1;
                 Frame::containing_address(PhysAddr::new(address)) >= self.next_free_frame
             })
-        .min_by_key(|area| area.base_addr);
+            .min_by_key(|area| area.base_addr);
 
         if let Some(area) = self.current_area {
             let start_frame = Frame::containing_address(PhysAddr::new(area.base_addr));
@@ -97,7 +103,8 @@ pub struct TinyAllocator([Option<Frame>; 3]);
 
 impl TinyAllocator {
     pub fn new<A>(allocator: &mut A) -> TinyAllocator
-        where A: FrameAllocator<Size4KiB>
+    where
+        A: FrameAllocator<Size4KiB>,
     {
         let mut f = || allocator.allocate_frame();
         let frames = [f(), f(), f()];

@@ -11,9 +11,9 @@ mod vga;
 extern crate multiboot2;
 
 use core::panic::PanicInfo;
-use vga::{Color, ColorCode};
-use memory::paging::{Size4KiB, FrameAllocator};
+use memory::paging::{FrameAllocator, Size4KiB};
 use multiboot2::BootInformation;
+use vga::{Color, ColorCode};
 
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
@@ -29,7 +29,8 @@ pub fn hlt_loop() -> ! {
 }
 
 pub fn init<A>(frame_allocator: &mut A, boot_info: &BootInformation)
-    where A: FrameAllocator<Size4KiB>
+where
+    A: FrameAllocator<Size4KiB>,
 {
     vga::change_color(ColorCode::new(Color::LightCyan, Color::Black));
     println!("Starting init");
@@ -46,7 +47,6 @@ fn enable_nxe_bit() {
     use x86_64::registers::control::{Efer, EferFlags};
     unsafe { Efer::update(|efer| *efer |= EferFlags::NO_EXECUTE_ENABLE) }
 }
-
 
 fn enable_write_protect_bit() {
     println!("Enabling write protection bit");
@@ -73,8 +73,13 @@ fn get_frame_allocator(multiboot_info_addr: usize) -> memory::AreaFrameAllocator
     let multiboot_start: u64 = multiboot_info_addr as u64;
     let multiboot_end: u64 = multiboot_start + (boot_info.total_size as u64);
 
-    memory::AreaFrameAllocator::new( kernel_start, kernel_end, multiboot_start,
-        multiboot_end, memory_map_tag.memory_areas())
+    memory::AreaFrameAllocator::new(
+        kernel_start,
+        kernel_end,
+        multiboot_start,
+        multiboot_end,
+        memory_map_tag.memory_areas(),
+    )
 }
 
 #[no_mangle]
@@ -83,10 +88,8 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
 
     let mut frame_allocator = get_frame_allocator(multiboot_info_addr);
 
-
     init(&mut frame_allocator, &boot_info);
     println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
-    memory::paging::test_paging(&mut frame_allocator);
     panic!("Kernel end of flow");
 }
