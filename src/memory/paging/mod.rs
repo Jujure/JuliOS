@@ -47,8 +47,6 @@ pub fn kernel_remap<A>(allocator: &mut A, boot_info: &BootInformation)
                 // section is not loaded to memory
                 continue;
             }
-            println!("mapping section at addr: {:#x}, size: {:#x}",
-                section.addr, section.size);
             assert!(section.start_address() % PAGE_SIZE == 0,
                     "sections need to be page aligned");
 

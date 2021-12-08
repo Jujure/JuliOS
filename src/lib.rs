@@ -34,6 +34,7 @@ pub fn init<A>(frame_allocator: &mut A, boot_info: &BootInformation)
     vga::change_color(ColorCode::new(Color::LightCyan, Color::Black));
     println!("Starting init");
     enable_nxe_bit();
+    enable_write_protect_bit();
     memory::kernel_remap(frame_allocator, boot_info);
     gdt::init_gdt();
     interrupts::init_idt();
@@ -44,6 +45,14 @@ fn enable_nxe_bit() {
     println!("Enabling nxe bit");
     use x86_64::registers::control::{Efer, EferFlags};
     unsafe { Efer::update(|efer| *efer |= EferFlags::NO_EXECUTE_ENABLE) }
+}
+
+
+fn enable_write_protect_bit() {
+    println!("Enabling write protection bit");
+    use x86_64::registers::control::{Cr0, Cr0Flags};
+
+    unsafe { Cr0::write(Cr0::read() | Cr0Flags::WRITE_PROTECT) };
 }
 
 fn get_frame_allocator(multiboot_info_addr: usize) -> memory::AreaFrameAllocator {
