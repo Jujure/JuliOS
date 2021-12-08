@@ -27,13 +27,13 @@ pub fn kernel_remap<A>(allocator: &mut A, boot_info: &BootInformation)
                 // section is not loaded to memory
                 continue;
             }
+            println!("mapping section at addr: {:#x}, size: {:#x}",
+                section.addr, section.size);
             assert!(section.start_address() % PAGE_SIZE == 0,
                     "sections need to be page aligned");
 
-            println!("mapping section at addr: {:#x}, size: {:#x}",
-                section.addr, section.size);
 
-            let flags = Flags::WRITABLE;
+            let flags = Flags::WRITABLE | Flags::PRESENT;
 
             let start_frame = Frame::<Size4KiB>::containing_address(PhysAddr::new(section.start_address() as u64));
             let end_frame = Frame::containing_address(PhysAddr::new(section.end_address() as u64 - 1));
@@ -74,7 +74,7 @@ impl InactivePageTable {
 
         f(active_table);
 
-        p4_table[511].set_frame(self.p4_frame, Flags::PRESENT | Flags::WRITABLE);
+        p4_table[511].set_frame(backup, Flags::PRESENT | Flags::WRITABLE);
         x86_64::instructions::tlb::flush_all();
 
         temporary_page.unmap(active_table);

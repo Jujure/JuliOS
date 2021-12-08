@@ -10,6 +10,7 @@ SECTIONS {
         . = ALIGN(4K);
     }
 
+    . = ALIGN(4K);
     .text :
     {
         *(.text .text.*)
