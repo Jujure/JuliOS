@@ -2,6 +2,7 @@ ENTRY(_start)
 SECTIONS {
     . = 1M;
 
+    . = ALIGN(4K);
     .rodata :
     {
         /* ensure that the multiboot header is at the beginning */
@@ -10,6 +11,12 @@ SECTIONS {
         . = ALIGN(4K);
     }
 
+    . = ALIGN(4K);
+    .eh_frame :
+    {
+        *(.eh_frame .eh_frame.*)
+        . = ALIGN(4K);
+    }
     . = ALIGN(4K);
     .text :
     {
