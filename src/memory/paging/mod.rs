@@ -1,4 +1,4 @@
-use multiboot2::BootInformation;
+use multiboot2::{BootInformation, ElfSection};
 pub use x86_64::structures::paging::{FrameAllocator, Size4KiB, PageTable, RecursivePageTable, Page, PageTableFlags as Flags, Mapper, PhysFrame as Frame};
 use crate::println;
 use x86_64::{VirtAddr, PhysAddr};
@@ -10,9 +10,29 @@ mod temporary_page;
 
 pub const P4: *mut PageTable = 0o177777_777_777_777_777_0000 as *mut _;
 
+fn get_flags_from_elf_section(section: &ElfSection) -> Flags {
+    use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_WRITABLE,
+        ELF_SECTION_EXECUTABLE};
+
+    let mut flags = Flags::empty();
+
+    if section.flags().contains(ELF_SECTION_ALLOCATED) {
+        flags = flags | Flags::PRESENT;
+    }
+    if section.flags().contains(ELF_SECTION_WRITABLE) {
+        flags = flags | Flags::WRITABLE;
+    }
+    if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
+        flags = flags | Flags::NO_EXECUTE;
+    }
+
+    flags
+}
+
 pub fn kernel_remap<A>(allocator: &mut A, boot_info: &BootInformation)
     where A: FrameAllocator<Size4KiB>
 {
+    println!("Remapping kernel");
     let mut temporary_page = TemporaryPage::new(Page::containing_address(VirtAddr::new(0xcafebabe)), allocator);
     let mut active_table = get_active_page_table();
     let mut new_table = {
@@ -33,7 +53,7 @@ pub fn kernel_remap<A>(allocator: &mut A, boot_info: &BootInformation)
                     "sections need to be page aligned");
 
 
-            let flags = Flags::WRITABLE | Flags::PRESENT;
+            let flags = get_flags_from_elf_section(section);
 
             let start_frame = Frame::<Size4KiB>::containing_address(PhysAddr::new(section.start_address() as u64));
             let end_frame = Frame::containing_address(PhysAddr::new(section.end_address() as u64 - 1));
@@ -129,7 +149,5 @@ pub fn test_paging<A>(allocator: &mut A)
     let page_ptr: *mut u8 = page.start_address().as_mut_ptr();
     let frame_ptr: *mut u8 = frame.start_address().as_u64() as *mut u8;
 
-    unsafe {
-        println!("Page: {:#?}, Frame: {:#?}", page_ptr, frame_ptr);
-    }
+    println!("Page: {:#?}, Frame: {:#?}", page_ptr, frame_ptr);
 }
