@@ -43,8 +43,22 @@ pub fn kernel_remap<A>(allocator: &mut A, boot_info: &BootInformation)
                 }
             }
         }
+        let vga_buffer_frame = Frame::<Size4KiB>::containing_address(PhysAddr::new(0xb8000));
+        unsafe {
+            mapper.identity_map(vga_buffer_frame, Flags::PRESENT | Flags::WRITABLE, allocator).expect("Failed to identity map VGA buffer").flush();
+        }
 
+        let multiboot_start = Frame::<Size4KiB>::containing_address(PhysAddr::new(boot_info.start_address() as u64));
+        let multiboot_end = Frame::containing_address(PhysAddr::new(boot_info.end_address() as u64 - 1));
+        for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
+            unsafe {
+                mapper.identity_map(frame, Flags::PRESENT, allocator).expect("Failed to identity map multiboot info struct").flush();
+            }
+        }
     });
+
+    new_table.activate();
+    println!("Loaded new page table!");
 }
 
 struct InactivePageTable {
@@ -79,6 +93,18 @@ impl InactivePageTable {
 
         temporary_page.unmap(active_table);
     }
+
+    pub fn activate(&mut self) -> InactivePageTable {
+        let old_table = InactivePageTable {
+            p4_frame: Frame::containing_address(
+                control::Cr3::read().0.start_address()
+            ),
+        };
+        unsafe {
+            control::Cr3::write(self.p4_frame, control::Cr3Flags::empty());
+        }
+        old_table
+    }
 }
 
 pub fn get_active_page_table() -> RecursivePageTable<'static> {
@@ -104,8 +130,6 @@ pub fn test_paging<A>(allocator: &mut A)
     let frame_ptr: *mut u8 = frame.start_address().as_u64() as *mut u8;
 
     unsafe {
-        println!("Page: {:#?}, Frame: {:#?}", *page_ptr, *frame_ptr);
-        *frame_ptr = 42;
-        println!("Page: {:#?}, Frame: {:#?}", *page_ptr, *frame_ptr);
+        println!("Page: {:#?}, Frame: {:#?}", page_ptr, frame_ptr);
     }
 }
