@@ -1,6 +1,6 @@
 # JuliOS
 
-Just an Unstable, Lame and Innefective Operating System
+Just an Unstable, Lame and Ineffective Operating System
 
 # Build requirements
 
@@ -15,5 +15,5 @@ Just an Unstable, Lame and Innefective Operating System
 make        # The kernel and an ISO
 make run    # Run qemu on the ISO
 make debug  # Run bochs on the ISO
-make clean  # Clean everythin
+make clean  # Clean everything
 ```
