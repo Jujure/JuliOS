@@ -5,6 +5,9 @@ use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use x86_64::structures::idt::{InterruptStackFrame};
 use x86_64::instructions::port::Port;
 use spin::{self, Mutex};
+pub use pit::timer_interrupt_handler;
+
+pub mod pit;
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -37,13 +40,6 @@ pub fn init_pic() {
     unsafe { PICS.lock().initialize() };
 }
 
-pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // print!(".");
-    unsafe {
-        PICS.lock()
-            .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
-    }
-}
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     lazy_static! {

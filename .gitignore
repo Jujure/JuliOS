@@ -5,3 +5,4 @@ iso
 julios
 .gdb_history
 peda-session-julios.txt
+*.swp
