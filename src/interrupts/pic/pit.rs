@@ -1,7 +1,5 @@
 use super::{PICS, InterruptIndex};
 use x86_64::structures::idt::InterruptStackFrame;
-use crate::{println};
-use lazy_static::lazy_static;
 
 static mut TICKS: u64 = 0;
 
