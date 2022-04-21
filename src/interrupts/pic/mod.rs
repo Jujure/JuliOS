@@ -5,7 +5,7 @@ use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use x86_64::structures::idt::{InterruptStackFrame};
 use x86_64::instructions::port::Port;
 use spin::{self, Mutex};
-pub use pit::timer_interrupt_handler;
+pub use pit::{timer_interrupt_handler, gettick};
 
 pub mod pit;
 
