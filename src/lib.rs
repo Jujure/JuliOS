@@ -8,6 +8,7 @@ mod interrupts;
 mod memory;
 mod serial;
 mod vga;
+mod task;
 
 //#[macro_use]
 extern crate alloc;
@@ -16,6 +17,7 @@ extern crate multiboot2;
 use core::panic::PanicInfo;
 use multiboot2::BootInformation;
 use vga::{Color, ColorCode};
+use task::{executor::Executor, Task, keyboard};
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
@@ -53,8 +55,7 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
 
-    use alloc::boxed::Box;
-    let x = Box::new(41);
-
-    panic!("Kernel end of flow");
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 }
