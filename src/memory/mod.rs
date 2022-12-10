@@ -10,6 +10,7 @@ use x86_64::structures::paging::{mapper::MapToError, page::PageRangeInclusive};
 pub mod frame_allocator;
 pub mod paging;
 pub mod heap_alloc;
+pub mod gdt;
 
 pub const PAGE_SIZE: usize = 4096;
 

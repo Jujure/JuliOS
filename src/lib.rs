@@ -3,7 +3,6 @@
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 
-mod gdt;
 mod interrupts;
 mod memory;
 mod drivers;
@@ -41,7 +40,7 @@ pub fn init(boot_info: &BootInformation)
     vga::change_color(ColorCode::new(Color::LightCyan, Color::Black));
     println!("Starting init");
     memory::init(boot_info);
-    gdt::init_gdt();
+    memory::gdt::init_gdt();
     interrupts::init_idt();
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
 }

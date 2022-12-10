@@ -1,4 +1,4 @@
-use crate::gdt;
+use crate::memory::gdt;
 use crate::hlt_loop;
 use crate::drivers::vga::{self, Color, ColorCode};
 use crate::{println};
