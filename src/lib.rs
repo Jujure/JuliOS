@@ -6,8 +6,7 @@
 mod gdt;
 mod interrupts;
 mod memory;
-mod serial;
-mod vga;
+mod drivers;
 mod task;
 
 //#[macro_use]
@@ -16,7 +15,7 @@ extern crate multiboot2;
 
 use core::panic::PanicInfo;
 use multiboot2::BootInformation;
-use vga::{Color, ColorCode};
+use drivers::vga::{self, Color, ColorCode};
 use task::{executor::Executor, Task, keyboard};
 
 #[alloc_error_handler]

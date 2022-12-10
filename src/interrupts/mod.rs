@@ -1,6 +1,6 @@
 use crate::gdt;
 use crate::hlt_loop;
-use crate::vga::{self, Color, ColorCode};
+use crate::drivers::vga::{self, Color, ColorCode};
 use crate::{println};
 use lazy_static::lazy_static;
 use x86_64::structures::idt::PageFaultErrorCode;
