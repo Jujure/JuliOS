@@ -1,3 +1,7 @@
+use crate::serial_println;
+use crate::println;
+
+use lazy_static::lazy_static;
 use x86_64::instructions::port::Port;
 
 const CD_SECTOR_SIZE: usize = 2048;
@@ -18,6 +22,10 @@ const ATA_DF: u8 = 1 << 5;
 const ATA_RDY: u8 = 1 << 6;
 const ATA_BSY: u8 = 1 << 7;
 
+// DCR bits
+const ATA_INTERRUPT_DISABLE: u8 = 1 << 1;
+const ATA_SRST: u8 = 1 << 2;
+
 // ATAPI signature
 const ATAPI_SIG_SC: u8 = 0x01;
 const ATAPI_SIG_LBA_LO: u8 = 0x01;
@@ -31,7 +39,37 @@ static ATAPI_SIG: [u8; 4] = [
     ATAPI_SIG_LBA_HI
 ];
 
+lazy_static! {
+    static ref DRIVE: Option<ATABus> = {
+        ATABus::discover_atapi_drive()
+    };
+}
+
+pub fn init() {
+    println!("Detecting drives");
+    match DRIVE.as_ref() {
+        None => println!("No drive detected :("),
+        Some(drive) => {
+            let drive_type = match drive.current_drive {
+                ATA_DRIVE_MASTER => "master",
+                ATA_DRIVE_SLAVE => "slave",
+                _ => "bad"
+            };
+            let bus = match drive.base_port {
+                ATA_BUS_PRIMARY => "primary",
+                ATA_BUS_SECONDARY => "secondary",
+                _ => "bad"
+            };
+            println!("Detected {} drive on {} bus", drive_type, bus);
+            serial_println!("Detected drive: {:?}", drive);
+        }
+    }
+}
+
+#[derive(Debug)]
 struct ATABus {
+    base_port: u16,
+
     // IO ports
     data: Port<u8>,
     features: Port<u8>, // write
@@ -49,8 +87,47 @@ struct ATABus {
 }
 
 impl ATABus {
-    pub fn new(port: u16) -> Self {
+    fn discover_atapi_drive() -> Option<Self> {
+        let mut primary_bus = ATABus::new(ATA_BUS_PRIMARY);
+
+        unsafe {
+            primary_bus.dcr.write(ATA_SRST);
+            primary_bus.dcr.write(ATA_INTERRUPT_DISABLE);
+        }
+
+        primary_bus.select_drive(ATA_DRIVE_MASTER);
+        if primary_bus.is_atapi() {
+            return Some(primary_bus);
+        }
+
+        primary_bus.select_drive(ATA_DRIVE_SLAVE);
+        if primary_bus.is_atapi() {
+            return Some(primary_bus);
+        }
+
+        let mut secondary_bus = ATABus::new(ATA_BUS_SECONDARY);
+        
+        unsafe {
+            secondary_bus.dcr.write(ATA_SRST);
+            primary_bus.dcr.write(ATA_INTERRUPT_DISABLE);
+        }
+
+        secondary_bus.select_drive(ATA_DRIVE_MASTER);
+        if secondary_bus.is_atapi() {
+            return Some(secondary_bus);
+        }
+
+        secondary_bus.select_drive(ATA_DRIVE_SLAVE);
+        if secondary_bus.is_atapi() {
+            return Some(secondary_bus);
+        }
+        None
+    }
+
+    fn new(port: u16) -> Self {
         ATABus {
+            base_port: port,
+
             data: Port::new(port),
             features: Port::new(port + 1), // write
             error: Port::new(port + 1), // read
@@ -76,7 +153,6 @@ impl ATABus {
     }
 
     fn is_atapi(&mut self) -> bool {
-
         let mut sig: [u8; 4] = [0, 0, 0, 0];
         unsafe {
             sig[0] = self.sector_count.read();
@@ -115,3 +191,4 @@ impl ATABus {
         }
     }
 }
+
