@@ -1,11 +1,11 @@
-use crate::memory::gdt;
-use crate::hlt_loop;
 use crate::drivers::vga::{self, Color, ColorCode};
-use crate::{println};
+use crate::hlt_loop;
+use crate::memory::gdt;
+use crate::println;
 use lazy_static::lazy_static;
+use pic::{init_pic, keyboard_interrupt_handler, timer_interrupt_handler, InterruptIndex};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use pic::{InterruptIndex, init_pic, keyboard_interrupt_handler, timer_interrupt_handler};
 
 pub mod pic;
 
@@ -64,5 +64,3 @@ extern "x86-interrupt" fn double_fault_handler(
 ) -> ! {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
-
-

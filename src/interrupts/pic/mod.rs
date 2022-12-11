@@ -1,14 +1,13 @@
-use pic8259::ChainedPics;
-use crate::{println};
-pub use pit::{timer_interrupt_handler};
+use crate::println;
 pub use keyboard::keyboard_interrupt_handler;
+use pic8259::ChainedPics;
+pub use pit::timer_interrupt_handler;
 
-pub mod pit;
 pub mod keyboard;
+pub mod pit;
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
-
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -34,5 +33,3 @@ pub fn init_pic() {
     println!("Initializing PIC");
     unsafe { PICS.lock().initialize() };
 }
-
-

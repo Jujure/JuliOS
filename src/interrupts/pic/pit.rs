@@ -1,11 +1,10 @@
-use super::{PICS, InterruptIndex};
+use super::{InterruptIndex, PICS};
 use x86_64::structures::idt::InterruptStackFrame;
 
 static mut TICKS: u64 = 0;
 
 pub fn gettick() -> u64 {
     unsafe { return TICKS }
-
 }
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {

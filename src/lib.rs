@@ -3,9 +3,9 @@
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 
+mod drivers;
 mod interrupts;
 mod memory;
-mod drivers;
 mod task;
 
 //#[macro_use]
@@ -13,9 +13,9 @@ extern crate alloc;
 extern crate multiboot2;
 
 use core::panic::PanicInfo;
-use multiboot2::BootInformation;
 use drivers::vga::{self, Color, ColorCode};
-use task::{executor::Executor, Task, keyboard};
+use multiboot2::BootInformation;
+use task::{executor::Executor, keyboard, Task};
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
@@ -35,8 +35,7 @@ pub fn hlt_loop() -> ! {
     }
 }
 
-pub fn init(boot_info: &BootInformation)
-{
+pub fn init(boot_info: &BootInformation) {
     vga::change_color(ColorCode::new(Color::LightCyan, Color::Black));
     println!("Starting init");
     memory::init(boot_info);

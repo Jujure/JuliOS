@@ -1,16 +1,16 @@
 pub use self::frame_allocator::AreaFrameAllocator;
-pub use paging::kernel_remap;
 use crate::println;
+use heap_alloc::{ALLOCATOR, HEAP_SIZE, HEAP_START};
 use multiboot2::BootInformation;
-use paging::{Size4KiB, RecursivePageTable, FrameAllocator, Page, Flags, Mapper};
-use heap_alloc::{HEAP_START, HEAP_SIZE, ALLOCATOR};
-use x86_64::VirtAddr;
+pub use paging::kernel_remap;
+use paging::{Flags, FrameAllocator, Mapper, Page, RecursivePageTable, Size4KiB};
 use x86_64::structures::paging::{mapper::MapToError, page::PageRangeInclusive};
+use x86_64::VirtAddr;
 
 pub mod frame_allocator;
-pub mod paging;
-pub mod heap_alloc;
 pub mod gdt;
+pub mod heap_alloc;
+pub mod paging;
 
 pub const PAGE_SIZE: usize = 4096;
 
@@ -19,13 +19,15 @@ pub fn init(boot_info: &BootInformation) {
     enable_write_protect_bit();
     let mut frame_allocator = get_frame_allocator(boot_info.start_address());
     let mut active_table = kernel_remap(&mut frame_allocator, boot_info);
-    init_heap(&mut active_table, &mut frame_allocator)
-        .expect("Heap initialization failed");
+    init_heap(&mut active_table, &mut frame_allocator).expect("Heap initialization failed");
 }
 
-fn init_heap<A>(active_table: &mut RecursivePageTable, frame_allocator: &mut A)
-    -> Result<(), MapToError<Size4KiB>>
-    where A: FrameAllocator<Size4KiB>
+fn init_heap<A>(
+    active_table: &mut RecursivePageTable,
+    frame_allocator: &mut A,
+) -> Result<(), MapToError<Size4KiB>>
+where
+    A: FrameAllocator<Size4KiB>,
 {
     let page_range: PageRangeInclusive<Size4KiB> = {
         let heap_start = VirtAddr::new(HEAP_START);
@@ -41,12 +43,16 @@ fn init_heap<A>(active_table: &mut RecursivePageTable, frame_allocator: &mut A)
             .ok_or(MapToError::FrameAllocationFailed)?;
         let flags = Flags::PRESENT | Flags::WRITABLE;
         unsafe {
-            active_table.map_to(page, frame, flags, frame_allocator)?.flush();
+            active_table
+                .map_to(page, frame, flags, frame_allocator)?
+                .flush();
         }
     }
 
     unsafe {
-        ALLOCATOR.lock().init(HEAP_START as usize, HEAP_SIZE as usize);
+        ALLOCATOR
+            .lock()
+            .init(HEAP_START as usize, HEAP_SIZE as usize);
     }
 
     Ok(())

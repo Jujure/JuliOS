@@ -6,7 +6,7 @@ use crossbeam_queue::ArrayQueue;
 pub struct Executor {
     tasks: BTreeMap<TaskId, Task>,
     task_queue: Arc<ArrayQueue<TaskId>>,
-    waker_cache: BTreeMap<TaskId, Waker>
+    waker_cache: BTreeMap<TaskId, Waker>,
 }
 
 impl Executor {
@@ -14,7 +14,7 @@ impl Executor {
         Executor {
             tasks: BTreeMap::new(),
             task_queue: Arc::new(ArrayQueue::new(100)),
-            waker_cache: BTreeMap::new()
+            waker_cache: BTreeMap::new(),
         }
     }
 
@@ -48,7 +48,7 @@ impl Executor {
         let Self {
             tasks,
             task_queue,
-            waker_cache
+            waker_cache,
         } = self; // Executor destructuring
 
         while let Ok(task_id) = task_queue.pop() {
@@ -74,14 +74,14 @@ impl Executor {
 
 struct TaskWaker {
     task_id: TaskId,
-    task_queue: Arc<ArrayQueue<TaskId>>
+    task_queue: Arc<ArrayQueue<TaskId>>,
 }
 
 impl TaskWaker {
     fn new(task_id: TaskId, task_queue: Arc<ArrayQueue<TaskId>>) -> Waker {
         Waker::from(Arc::new(TaskWaker {
             task_id,
-            task_queue
+            task_queue,
         }))
     }
 

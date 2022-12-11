@@ -13,7 +13,6 @@ mod temporary_page;
 
 pub const P4: *mut PageTable = 0o177777_777_777_777_777_0000 as *mut _;
 
-
 fn get_flags_from_elf_section(section: &ElfSection) -> Flags {
     use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE, ELF_SECTION_WRITABLE};
 
@@ -32,8 +31,9 @@ fn get_flags_from_elf_section(section: &ElfSection) -> Flags {
     flags
 }
 
-pub fn kernel_remap<'a, A>(allocator: &mut A, boot_info: & BootInformation) -> RecursivePageTable<'a>
-    where A: FrameAllocator<Size4KiB>,
+pub fn kernel_remap<'a, A>(allocator: &mut A, boot_info: &BootInformation) -> RecursivePageTable<'a>
+where
+    A: FrameAllocator<Size4KiB>,
 {
     println!("Remapping kernel");
     let mut temporary_page = TemporaryPage::new(
@@ -107,7 +107,11 @@ pub fn kernel_remap<'a, A>(allocator: &mut A, boot_info: & BootInformation) -> R
     let old_p4_page = Page::<Size4KiB>::containing_address(VirtAddr::new(
         old_table.p4_frame.start_address().as_u64(),
     ));
-    active_table.unmap(old_p4_page).expect("Failed to unmap old P4").1.flush();
+    active_table
+        .unmap(old_p4_page)
+        .expect("Failed to unmap old P4")
+        .1
+        .flush();
     println!("Stack guard page at {:#x}", old_p4_page.start_address());
     active_table
 }

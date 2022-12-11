@@ -1,7 +1,7 @@
-use super::{PICS, InterruptIndex};
+use super::{InterruptIndex, PICS};
 
 use x86_64::instructions::port::Port;
-use x86_64::structures::idt::{InterruptStackFrame};
+use x86_64::structures::idt::InterruptStackFrame;
 
 pub const PS2_CONTROLLER_PORT: u16 = 0x60;
 
