@@ -209,10 +209,12 @@ impl ATABus {
 
     fn select_delay(&mut self) {
         unsafe {
-            self.dcr.read();
-            self.dcr.read();
-            self.dcr.read();
-            self.dcr.read();
+            for _ in 0..100 {
+                self.dcr.read();
+                self.dcr.read();
+                self.dcr.read();
+                self.dcr.read();
+            }
         }
     }
 
