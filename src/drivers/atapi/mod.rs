@@ -117,7 +117,7 @@ impl ATABus {
         }
 
         let mut secondary_bus = ATABus::new(ATA_BUS_SECONDARY);
-        
+
         unsafe {
             secondary_bus.dcr.write(ATA_SRST);
             primary_bus.dcr.write(ATA_INTERRUPT_DISABLE);
@@ -190,7 +190,7 @@ impl ATABus {
         self.wait_packet_request();
 
         for i in (0..raw_packet.len()).step_by(2) {
-            let word = u16::from_be_bytes(raw_packet[i..i+2].try_into().unwrap());
+            let word = u16::from_le_bytes(raw_packet[i..i+2].try_into().unwrap());
             unsafe {
                 self.data.write(word);
             }
