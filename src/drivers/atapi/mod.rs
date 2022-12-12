@@ -1,4 +1,3 @@
-use crate::serial_println;
 use crate::println;
 
 use core::convert::TryInto;
@@ -22,11 +21,18 @@ const ATA_DRIVE_SLAVE: u8 = 0xb0;
 // ATA Commands
 const ATA_CMD_PACKET: u8 = 0xa0;
 
+// SCSI commands
+const SCSI_READ_12: u8 = 0xa8;
+
 // Status bits
+#[allow(dead_code)]
 const ATA_ERR: u8 = 1 << 0;
 const ATA_DRQ: u8 = 1 << 3;
+#[allow(dead_code)]
 const ATA_SRV: u8 = 1 << 4;
+#[allow(dead_code)]
 const ATA_DF: u8 = 1 << 5;
+#[allow(dead_code)]
 const ATA_RDY: u8 = 1 << 6;
 const ATA_BSY: u8 = 1 << 7;
 
@@ -69,12 +75,8 @@ pub fn init() {
                 _ => "bad"
             };
             println!("Detected {} drive on {} bus", drive_type, bus);
-            serial_println!("Detected drive: {:?}", drive);
         }
     }
-
-    // TODO : remove
-    DRIVE.lock().as_mut().unwrap().send_packet(SCSIPacket::new());
 }
 
 #[derive(Debug)]
@@ -84,6 +86,7 @@ struct ATABus {
     // IO ports
     data: Port<u16>,
     features: Port<u8>, // write
+    #[allow(dead_code)]
     error: Port<u8>, // read
     sector_count: Port<u8>,
     address1: Port<u8>,
@@ -95,6 +98,8 @@ struct ATABus {
     dcr: Port<u8>,
 
     current_drive: u8,
+
+    block: [u8; CD_SECTOR_SIZE],
 }
 
 impl ATABus {
@@ -152,6 +157,8 @@ impl ATABus {
             dcr: Port::new(port + 0x206),
 
             current_drive: 0,
+
+            block: [0; CD_SECTOR_SIZE],
         }
     }
 
@@ -195,7 +202,42 @@ impl ATABus {
                 self.data.write(word);
             }
         }
-        // TODO: Wait packet data transmit
+    }
+
+    fn read_block(&mut self, lba: u32) {
+        let mut packet = SCSIPacket::new();
+
+        packet.op_code = SCSI_READ_12;
+        packet.set_lba(lba);
+        packet.transfer_length_lo = 1;
+
+        self.send_packet(packet);
+
+        // Wait packet is transmitted
+        let mut transmit: u8 = 0;
+        // 0x2 is PACKET_DATA_TRANSMIT
+        while transmit != 0x2 {
+            unsafe {
+                transmit = self.sector_count.read();
+            }
+        }
+
+        for i in (0..CD_SECTOR_SIZE).step_by(2) {
+            unsafe {
+                let bytes: [u8; 2] = self.data.read().to_le_bytes();
+                self.block[i] = bytes[0];
+                self.block[i + 1] = bytes[1];
+            }
+        }
+
+        // Wait command end
+        let mut complete: u8 = 0;
+        // 0x3 is PACKET_COMMAND_COMPLETE
+        while complete != 0x3 {
+            unsafe {
+                complete = self.sector_count.read();
+            }
+        }
     }
 
     fn wait_busy(&mut self) {
@@ -235,7 +277,7 @@ struct SCSIPacket {
     flags_lo: u8,
     lba_hi: u8,
     lba_mihi: u8,
-    lba_midlo: u8,
+    lba_milo: u8,
     lba_lo: u8,
     transfer_length_hi: u8,
     transfer_length_mihi: u8,
@@ -252,5 +294,20 @@ impl SCSIPacket {
 
     fn serialize(&self) -> heapless::Vec<u8, 12> {
         to_vec(&self).unwrap()
+    }
+
+    fn set_lba(&mut self, lba: u32) {
+        self.lba_lo = (lba & 0xff) as u8;
+        self.lba_milo = ((lba >> 0x8) & 0xff) as u8;
+        self.lba_mihi = ((lba >> 0x10) & 0xff) as u8;
+        self.lba_hi = ((lba >> 0x18) & 0xff) as u8;
+    }
+
+    #[allow(dead_code)]
+    fn set_transfer_length(&mut self, l: u32) {
+        self.transfer_length_lo = (l & 0xff) as u8;
+        self.transfer_length_milo = ((l >> 0x8) & 0xff) as u8;
+        self.transfer_length_mihi = ((l >> 0x10) & 0xff) as u8;
+        self.transfer_length_hi = ((l >> 0x18) & 0xff) as u8;
     }
 }
