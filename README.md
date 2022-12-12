@@ -1,5 +1,7 @@
 # JuliOS
 
+[![Build Status](https://drone.juju.re/api/badges/juju/JuliOS/status.svg)](https://drone.juju.re/juju/JuliOS)
+
 Just an Unstable, Lame and Ineffective Operating System
 
 # Build requirements
