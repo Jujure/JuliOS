@@ -1,7 +1,12 @@
 use crate::serial_println;
 use crate::println;
 
+use core::convert::TryInto;
+
 use lazy_static::lazy_static;
+use serde::{Serialize, Deserialize};
+use spin::Mutex;
+use postcard::{to_vec};
 use x86_64::instructions::port::Port;
 
 const CD_SECTOR_SIZE: usize = 2048;
@@ -13,6 +18,9 @@ const ATA_BUS_SECONDARY: u16 = 0x170;
 // Drives
 const ATA_DRIVE_MASTER: u8 = 0xa0;
 const ATA_DRIVE_SLAVE: u8 = 0xb0;
+
+// ATA Commands
+const ATA_CMD_PACKET: u8 = 0xa0;
 
 // Status bits
 const ATA_ERR: u8 = 1 << 0;
@@ -40,14 +48,14 @@ static ATAPI_SIG: [u8; 4] = [
 ];
 
 lazy_static! {
-    static ref DRIVE: Option<ATABus> = {
-        ATABus::discover_atapi_drive()
+    static ref DRIVE: Mutex<Option<ATABus>> = {
+        Mutex::new(ATABus::discover_atapi_drive())
     };
 }
 
 pub fn init() {
     println!("Detecting drives");
-    match DRIVE.as_ref() {
+    match DRIVE.lock().as_ref() {
         None => println!("No drive detected :("),
         Some(drive) => {
             let drive_type = match drive.current_drive {
@@ -64,6 +72,9 @@ pub fn init() {
             serial_println!("Detected drive: {:?}", drive);
         }
     }
+
+    // TODO : remove
+    DRIVE.lock().as_mut().unwrap().send_packet(SCSIPacket::new());
 }
 
 #[derive(Debug)]
@@ -71,7 +82,7 @@ struct ATABus {
     base_port: u16,
 
     // IO ports
-    data: Port<u8>,
+    data: Port<u16>,
     features: Port<u8>, // write
     error: Port<u8>, // read
     sector_count: Port<u8>,
@@ -164,6 +175,29 @@ impl ATABus {
         ATAPI_SIG == sig
     }
 
+    fn send_packet(&mut self, packet: SCSIPacket) {
+        let raw_packet = packet.serialize();
+        self.wait_busy();
+
+        unsafe {
+            self.features.write(0);
+            self.sector_count.write(0);
+            self.address2.write((CD_SECTOR_SIZE & 0xff) as u8);
+            self.address3.write(((CD_SECTOR_SIZE >> 8) & 0xff) as u8);
+            self.command.write(ATA_CMD_PACKET);
+        }
+
+        self.wait_packet_request();
+
+        for i in (0..raw_packet.len()).step_by(2) {
+            let word = u16::from_be_bytes(raw_packet[i..i+2].try_into().unwrap());
+            unsafe {
+                self.data.write(word);
+            }
+        }
+        // TODO: Wait packet data transmit
+    }
+
     fn wait_busy(&mut self) {
         let mut status = ATA_BSY;
         while (status & ATA_BSY) != 0 {
@@ -192,3 +226,29 @@ impl ATABus {
     }
 }
 
+#[derive(Default, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[repr(C, packed)]
+struct SCSIPacket {
+    op_code: u8,
+    flags_lo: u8,
+    lba_hi: u8,
+    lba_mihi: u8,
+    lba_midlo: u8,
+    lba_lo: u8,
+    transfer_length_hi: u8,
+    transfer_length_mihi: u8,
+    transfer_length_milo: u8,
+    transfer_length_lo: u8,
+    flags_hi: u8,
+    control: u8
+}
+
+impl SCSIPacket {
+    fn new() -> Self {
+        SCSIPacket::default()
+    }
+
+    fn serialize(&self) -> heapless::Vec<u8, 12> {
+        to_vec(&self).unwrap()
+    }
+}
