@@ -3,7 +3,14 @@ use crate::hlt_loop;
 use crate::memory::gdt;
 use crate::println;
 use lazy_static::lazy_static;
-use pic::{init_pic, keyboard_interrupt_handler, timer_interrupt_handler, InterruptIndex};
+use pic::{
+    init_pic,
+    keyboard_interrupt_handler,
+    timer_interrupt_handler,
+    disk1_interrupt_handler,
+    disk2_interrupt_handler,
+    InterruptIndex
+};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -21,6 +28,8 @@ lazy_static! {
         }
         idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
         idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
+        idt[InterruptIndex::HardDisk1.as_usize()].set_handler_fn(disk1_interrupt_handler);
+        idt[InterruptIndex::HardDisk2.as_usize()].set_handler_fn(disk2_interrupt_handler);
         idt
     };
 }

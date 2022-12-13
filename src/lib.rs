@@ -40,8 +40,10 @@ pub fn init(boot_info: &BootInformation) {
     println!("Starting init");
     memory::init(boot_info);
     memory::gdt::init_gdt();
-    drivers::atapi::init();
     interrupts::init_idt();
+    drivers::atapi::init();
+    drivers::atapi::DRIVE.lock().as_mut().unwrap().read_block(0);
+    serial_println!("{:x?}", drivers::atapi::DRIVE.lock().as_mut().unwrap().block);
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
 }
 

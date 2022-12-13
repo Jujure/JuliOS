@@ -54,7 +54,7 @@ static ATAPI_SIG: [u8; 4] = [
 ];
 
 lazy_static! {
-    static ref DRIVE: Mutex<Option<ATABus>> = {
+    pub static ref DRIVE: Mutex<Option<ATABus>> = {
         Mutex::new(ATABus::discover_atapi_drive())
     };
 }
@@ -80,7 +80,7 @@ pub fn init() {
 }
 
 #[derive(Debug)]
-struct ATABus {
+pub struct ATABus {
     base_port: u16,
 
     // IO ports
@@ -99,7 +99,7 @@ struct ATABus {
 
     current_drive: u8,
 
-    block: [u8; CD_SECTOR_SIZE],
+    pub block: [u8; CD_SECTOR_SIZE],
 }
 
 impl ATABus {
@@ -108,7 +108,7 @@ impl ATABus {
 
         unsafe {
             primary_bus.dcr.write(ATA_SRST);
-            primary_bus.dcr.write(ATA_INTERRUPT_DISABLE);
+            primary_bus.dcr.write(0);
         }
 
         primary_bus.select_drive(ATA_DRIVE_MASTER);
@@ -125,7 +125,7 @@ impl ATABus {
 
         unsafe {
             secondary_bus.dcr.write(ATA_SRST);
-            primary_bus.dcr.write(ATA_INTERRUPT_DISABLE);
+            primary_bus.dcr.write(0);
         }
 
         secondary_bus.select_drive(ATA_DRIVE_MASTER);
@@ -204,7 +204,7 @@ impl ATABus {
         }
     }
 
-    fn read_block(&mut self, lba: u32) {
+    pub fn read_block(&mut self, lba: u32) {
         let mut packet = SCSIPacket::new();
 
         packet.op_code = SCSI_READ_12;

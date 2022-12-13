@@ -2,9 +2,11 @@ use crate::println;
 pub use keyboard::keyboard_interrupt_handler;
 use pic8259::ChainedPics;
 pub use pit::timer_interrupt_handler;
+pub use disk::{disk1_interrupt_handler, disk2_interrupt_handler};
 
 pub mod keyboard;
 pub mod pit;
+pub mod disk;
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -14,6 +16,8 @@ pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
     Keyboard,
+    HardDisk1 = PIC_1_OFFSET + 14,
+    HardDisk2 = PIC_1_OFFSET + 15,
 }
 
 impl InterruptIndex {
