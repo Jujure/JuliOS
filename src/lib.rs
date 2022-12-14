@@ -42,8 +42,6 @@ pub fn init(boot_info: &BootInformation) {
     memory::gdt::init_gdt();
     interrupts::init_idt();
     drivers::atapi::init();
-    drivers::atapi::DRIVE.lock().as_mut().unwrap().read_block(0);
-    serial_println!("{:x?}", drivers::atapi::DRIVE.lock().as_mut().unwrap().block);
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
 }
 
@@ -56,6 +54,7 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     serial_println!("Hello serial");
 
     let mut executor = Executor::new();
+    executor.spawn(Task::new(drivers::atapi::print_block()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }

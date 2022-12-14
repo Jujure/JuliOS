@@ -1,8 +1,13 @@
-use crate::println;
+use crate::{println, serial_println};
 
 use core::convert::TryInto;
+use core::future::Future;
+use core::pin::Pin;
+use core::sync::atomic::{AtomicBool, Ordering};
+use core::task::{Context, Poll};
 
 use lazy_static::lazy_static;
+use futures_util::task::AtomicWaker;
 use serde::{Serialize, Deserialize};
 use spin::Mutex;
 use postcard::{to_vec};
@@ -37,6 +42,7 @@ const ATA_RDY: u8 = 1 << 6;
 const ATA_BSY: u8 = 1 << 7;
 
 // DCR bits
+#[allow(dead_code)]
 const ATA_INTERRUPT_DISABLE: u8 = 1 << 1;
 const ATA_SRST: u8 = 1 << 2;
 
@@ -57,7 +63,13 @@ lazy_static! {
     pub static ref DRIVE: Mutex<Option<ATABus>> = {
         Mutex::new(ATABus::discover_atapi_drive())
     };
+
+    static ref INTERRUPT_FUTURE: InterruptFuture = InterruptFuture::new();
+
+    static ref INTERRUPT: AtomicBool = AtomicBool::new(false);
 }
+
+static WAKER: AtomicWaker = AtomicWaker::new();
 
 pub fn init() {
     println!("Detecting drives");
@@ -75,6 +87,49 @@ pub fn init() {
                 _ => "bad"
             };
             println!("Detected {} drive on {} bus", drive_type, bus);
+        }
+    };
+    INTERRUPT_FUTURE.pop();
+}
+
+pub(crate) fn mark_interrupt() {
+    INTERRUPT.store(true, Ordering::Relaxed);
+    WAKER.wake();
+}
+
+#[derive(Copy,Clone)]
+struct InterruptFuture {
+    _private:(),
+}
+
+impl InterruptFuture {
+    pub fn new() -> Self {
+        InterruptFuture { _private: () }
+    }
+
+    fn pop(&self) -> bool {
+        let res = INTERRUPT.load(Ordering::Relaxed);
+        INTERRUPT.store(false, Ordering::Relaxed);
+        res
+    }
+}
+
+impl Future for InterruptFuture {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+        if self.pop() {
+            return Poll::Ready(());
+        }
+
+        WAKER.register(&cx.waker());
+
+        match self.pop() {
+            true => {
+                WAKER.take();
+                Poll::Ready(())
+            },
+            false => Poll::Pending,
         }
     }
 }
@@ -205,7 +260,7 @@ impl ATABus {
         }
     }
 
-    pub fn read_block(&mut self, lba: u32) {
+    pub fn sync_read_block(&mut self, lba: u32) {
         let mut packet = SCSIPacket::new();
 
         packet.op_code = SCSI_READ_12;
@@ -239,6 +294,41 @@ impl ATABus {
                 complete = self.sector_count.read();
             }
         }
+    }
+
+    pub async fn read_block(&mut self, lba: u32) {
+        let mut packet = SCSIPacket::new();
+
+        packet.op_code = SCSI_READ_12;
+        packet.set_lba(lba);
+        packet.transfer_length_lo = 1;
+
+        self.send_packet(packet);
+
+        println!("Waiting packet send");
+
+        // Wait packet is transmitted
+        (*INTERRUPT_FUTURE).await;
+
+        println!("Packet sent");
+
+        let mut _size: usize = 0;
+        unsafe {
+            _size = ((self.address3.read() as usize) << 8) | self.address2.read() as usize;
+        }
+
+        for i in (0..CD_SECTOR_SIZE).step_by(2) {
+            unsafe {
+                let bytes: [u8; 2] = self.data.read().to_le_bytes();
+                self.block[i] = bytes[0];
+                self.block[i + 1] = bytes[1];
+            }
+        }
+
+        println!("Waiting command send");
+        // Wait command end
+        (*INTERRUPT_FUTURE).await;
+        println!("Command sent");
     }
 
     fn wait_busy(&mut self) {
@@ -311,4 +401,10 @@ impl SCSIPacket {
         self.transfer_length_mihi = ((l >> 0x10) & 0xff) as u8;
         self.transfer_length_hi = ((l >> 0x18) & 0xff) as u8;
     }
+}
+
+
+pub async fn print_block() {
+    DRIVE.lock().as_mut().unwrap().read_block(0).await;
+    serial_println!("{:x?}", DRIVE.lock().as_mut().unwrap().block);
 }

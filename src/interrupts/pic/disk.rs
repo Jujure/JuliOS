@@ -4,6 +4,7 @@ use super::{InterruptIndex, PICS};
 use x86_64::structures::idt::InterruptStackFrame;
 
 fn disk_interrupt_handler(disk: u16) {
+    crate::drivers::atapi::mark_interrupt();
     println!("Received disk {} interrupt", disk);
 }
 
