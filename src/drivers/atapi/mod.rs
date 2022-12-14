@@ -106,10 +106,7 @@ impl ATABus {
     fn discover_atapi_drive() -> Option<Self> {
         let mut primary_bus = ATABus::new(ATA_BUS_PRIMARY);
 
-        unsafe {
-            primary_bus.dcr.write(ATA_SRST);
-            primary_bus.dcr.write(0);
-        }
+        primary_bus.software_reset();
 
         primary_bus.select_drive(ATA_DRIVE_MASTER);
         if primary_bus.is_atapi() {
@@ -123,10 +120,7 @@ impl ATABus {
 
         let mut secondary_bus = ATABus::new(ATA_BUS_SECONDARY);
 
-        unsafe {
-            secondary_bus.dcr.write(ATA_SRST);
-            primary_bus.dcr.write(0);
-        }
+        secondary_bus.software_reset();
 
         secondary_bus.select_drive(ATA_DRIVE_MASTER);
         if secondary_bus.is_atapi() {
@@ -138,6 +132,13 @@ impl ATABus {
             return Some(secondary_bus);
         }
         None
+    }
+
+    fn software_reset(&mut self) {
+        unsafe {
+            self.dcr.write(ATA_SRST);
+            self.dcr.write(0);
+        }
     }
 
     fn new(port: u16) -> Self {

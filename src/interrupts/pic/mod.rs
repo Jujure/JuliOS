@@ -35,5 +35,8 @@ pub static PICS: spin::Mutex<ChainedPics> =
 
 pub fn init_pic() {
     println!("Initializing PIC");
-    unsafe { PICS.lock().initialize() };
+    unsafe { 
+        PICS.lock().initialize();
+        PICS.lock().write_masks(0b10111000, 0b00001110);
+    };
 }
