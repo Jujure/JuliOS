@@ -330,6 +330,8 @@ impl ATABus {
         // Wait command end
         (*INTERRUPT_FUTURE).await;
         println!("Command sent");
+
+        self.wait_command_end();
     }
 
     fn wait_busy(&mut self) {
@@ -355,6 +357,15 @@ impl ATABus {
     fn wait_packet_request(&mut self) {
         let mut status = ATA_BSY;
         while (status & ATA_BSY) != 0 && (status & ATA_DRQ) == 0 {
+            unsafe {
+                status = self.status.read();
+            }
+        }
+    }
+
+    fn wait_command_end(&mut self) {
+        let mut status = ATA_BSY;
+        while (status & ATA_BSY) != 0 && (status & ATA_DRQ) != 0 {
             unsafe {
                 status = self.status.read();
             }
