@@ -1,16 +1,13 @@
 mod scsi;
+pub mod interrupt;
 
 use crate::{println, serial_println};
 use scsi::{SCSIPacket};
+use interrupt::{INTERRUPT_FUTURE};
 
 use core::convert::TryInto;
-use core::future::Future;
-use core::pin::Pin;
-use core::sync::atomic::{AtomicBool, Ordering};
-use core::task::{Context, Poll};
 
 use lazy_static::lazy_static;
-use futures_util::task::AtomicWaker;
 use spin::Mutex;
 use x86_64::instructions::port::Port;
 
@@ -64,13 +61,8 @@ lazy_static! {
     pub static ref DRIVE: Mutex<Option<ATABus>> = {
         Mutex::new(ATABus::discover_atapi_drive())
     };
-
-    static ref INTERRUPT_FUTURE: InterruptFuture = InterruptFuture::new();
-
-    static ref INTERRUPT: AtomicBool = AtomicBool::new(false);
 }
 
-static WAKER: AtomicWaker = AtomicWaker::new();
 
 pub fn init() {
     println!("Detecting drives");
@@ -91,48 +83,6 @@ pub fn init() {
         }
     };
     INTERRUPT_FUTURE.pop();
-}
-
-pub(crate) fn mark_interrupt() {
-    INTERRUPT.store(true, Ordering::Relaxed);
-    WAKER.wake();
-}
-
-#[derive(Copy,Clone)]
-struct InterruptFuture {
-    _private:(),
-}
-
-impl InterruptFuture {
-    pub fn new() -> Self {
-        InterruptFuture { _private: () }
-    }
-
-    fn pop(&self) -> bool {
-        let res = INTERRUPT.load(Ordering::Relaxed);
-        INTERRUPT.store(false, Ordering::Relaxed);
-        res
-    }
-}
-
-impl Future for InterruptFuture {
-    type Output = ();
-
-    fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        if self.pop() {
-            return Poll::Ready(());
-        }
-
-        WAKER.register(&cx.waker());
-
-        match self.pop() {
-            true => {
-                WAKER.take();
-                Poll::Ready(())
-            },
-            false => Poll::Pending,
-        }
-    }
 }
 
 #[derive(Debug)]
