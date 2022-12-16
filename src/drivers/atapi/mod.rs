@@ -245,6 +245,7 @@ impl ATABus {
                 complete = self.sector_count.read();
             }
         }
+        self.wait_command_end();
     }
 
     pub async fn read_block(&mut self, lba: u32) {
@@ -256,12 +257,8 @@ impl ATABus {
 
         self.send_packet(packet);
 
-        println!("Waiting packet send");
-
         // Wait packet is transmitted
         (*INTERRUPT_FUTURE).await;
-
-        println!("Packet sent");
 
         let mut _size: usize = 0;
         unsafe {
@@ -276,10 +273,8 @@ impl ATABus {
             }
         }
 
-        println!("Waiting command send");
         // Wait command end
-        (*INTERRUPT_FUTURE).await;
-        println!("Command sent");
+        //(*INTERRUPT_FUTURE).await;
 
         self.wait_command_end();
     }
@@ -325,6 +320,6 @@ impl ATABus {
 
 
 pub async fn print_block() {
-    DRIVE.lock().as_mut().unwrap().read_block(0).await;
+    DRIVE.lock().as_mut().unwrap().read_block(500).await;
     serial_println!("{:x?}", DRIVE.lock().as_mut().unwrap().block);
 }

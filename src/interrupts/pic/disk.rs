@@ -5,7 +5,7 @@ use x86_64::structures::idt::InterruptStackFrame;
 
 fn disk_interrupt_handler(disk: u16) {
     crate::drivers::atapi::interrupt::mark_interrupt();
-    println!("Received disk {} interrupt", disk);
+    // println!("Received disk {} interrupt", disk);
 }
 
 pub extern "x86-interrupt" fn disk1_interrupt_handler(_stack_frame: InterruptStackFrame) {
