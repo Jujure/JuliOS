@@ -4,7 +4,7 @@ pub struct IsoPathTable {
     ext_size: u8, // Extended attribute record length
     data_blk: u8, // File data block index
     parent_dir: u16, // Number of the parent dir
-    // idf: [char] // Directory name, of size Self::idf_len
+    idf: [char; 0] // Directory name, of size Self::idf_len
 }
 
 impl IsoPathTable {
@@ -16,10 +16,10 @@ impl IsoPathTable {
         }
     }
 
-    pub fn get_idf(&self) -> *const char {
-        let ptr: *const IsoPathTable = self;
+    #[allow(unaligned_references)]
+    pub fn get_idf(&self) -> &[char] {
         unsafe {
-            ptr.offset(1) as *const char
+            core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize)
         }
     }
 }
