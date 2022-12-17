@@ -7,6 +7,7 @@ mod drivers;
 mod interrupts;
 mod memory;
 mod task;
+mod fs;
 
 //#[macro_use]
 extern crate alloc;

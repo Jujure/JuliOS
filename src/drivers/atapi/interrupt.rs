@@ -1,5 +1,3 @@
-use crate::println;
-
 use core::future::Future;
 use core::pin::Pin;
 use core::sync::atomic::{AtomicBool, Ordering};
