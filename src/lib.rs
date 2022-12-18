@@ -18,6 +18,8 @@ use drivers::vga::{self, Color, ColorCode};
 use multiboot2::BootInformation;
 use task::{executor::Executor, keyboard, Task};
 
+use fs::iso::iso9660::{IsoDir, IsoPrimVolDesc, MultiEndian32};
+
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
     panic!("Allocation error: {:?}", layout)
@@ -54,8 +56,11 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
 
+    serial_println!("{}", core::mem::size_of::<IsoPrimVolDesc>());
+    serial_println!("{}", core::mem::size_of::<IsoDir>());
+    serial_println!("{}", core::mem::size_of::<MultiEndian32>());
+
     let mut executor = Executor::new();
-    executor.spawn(Task::new(drivers::atapi::print_block()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }
