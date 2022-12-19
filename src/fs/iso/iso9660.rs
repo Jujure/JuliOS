@@ -27,14 +27,6 @@ struct IsoPathTable {
 }
 
 impl IsoPathTable {
-    pub fn from(mapping: &u8) -> &Self {
-        let ptr: *const u8 = mapping;
-        let path_table_ptr: *const Self = ptr as *const Self;
-        unsafe {
-            &*path_table_ptr
-        }
-    }
-
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
         unsafe {
@@ -77,14 +69,6 @@ pub struct IsoDir {
 }
 
 impl IsoDir {
-    pub fn from(mapping: &u8) -> &Self {
-        let ptr: *const u8 = mapping;
-        let path_table_ptr: *const Self = ptr as *const Self;
-        unsafe {
-            &*path_table_ptr
-        }
-    }
-
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
         unsafe {

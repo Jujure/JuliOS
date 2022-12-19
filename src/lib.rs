@@ -8,6 +8,7 @@ mod interrupts;
 mod memory;
 mod task;
 mod fs;
+mod utils;
 
 //#[macro_use]
 extern crate alloc;
