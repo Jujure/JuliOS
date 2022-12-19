@@ -80,7 +80,7 @@ impl IsoDir {
 
 // Primary volume descriptor structure
 
-const ISO_PRIM_VOLDESC_BLOCK: usize = 16;
+pub const ISO_PRIM_VOLDESC_BLOCK: u32 = 16;
 
 const ISO_SYSIDF_LEN: usize = 32;
 const ISO_VOLIDF_LEN: usize = 32;
@@ -95,47 +95,47 @@ const ISO_LDATE_LEN: usize = 17;
 
 #[repr(C, packed)]
 pub struct IsoPrimVolDesc {
-    vol_desc_type: u8, // Volume descripto type (1)
-    std_identifier: [u8; 5], // standard identifier ("CD001")
-    vol_desc_version: u8, // Volume descriptor version (1)
+    pub vol_desc_type: u8, // Volume descripto type (1)
+    pub std_identifier: [u8; 5], // standard identifier ("CD001")
+    pub vol_desc_version: u8, // Volume descriptor version (1)
 
-    _unused1: u8,
+    pub _unused1: u8,
 
-    sys_idf: [u8; ISO_SYSIDF_LEN], // System identifier
-    vol_idf: [u8; ISO_VOLIDF_LEN], // Volume identifier
+    pub sys_idf: [u8; ISO_SYSIDF_LEN], // System identifier
+    pub vol_idf: [u8; ISO_VOLIDF_LEN], // Volume identifier
 
-    _unused2: [u8; 8],
+    pub _unused2: [u8; 8],
 
-    vol_blk_count: MultiEndian32, // Number of logical blocks in the volume
+    pub vol_blk_count: MultiEndian32, // Number of logical blocks in the volume
 
-    _unused3: [u8; 32],
+    pub _unused3: [u8; 32],
 
-    vol_set_size: MultiEndian16, // The Volume Set size of the volume
-    vol_seq_num: MultiEndian16, // The number of the volume in the set
-    vol_blk_size: MultiEndian16, // The size in bytes of a logical block
+    pub vol_set_size: MultiEndian16, // The Volume Set size of the volume
+    pub vol_seq_num: MultiEndian16, // The number of the volume in the set
+    pub vol_blk_size: MultiEndian16, // The size in bytes of a logical block
 
-    path_table_size: MultiEndian32, // Length in bytes of the path table
-    le_path_table_blk: u32, // Path table block index little endian
-    le_opt_path_table_blk: u32, // Optionnal path table block index little endian
-    be_path_table_blk: u32,
-    be_opt_path_table_blk: u32,
+    pub path_table_size: MultiEndian32, // Length in bytes of the path table
+    pub le_path_table_blk: u32, // Path table block index little endian
+    pub le_opt_path_table_blk: u32, // Optionnal path table block index little endian
+    pub be_path_table_blk: u32,
+    pub be_opt_path_table_blk: u32,
 
-    root_dir: IsoDir, // Root directory entry
+    pub root_dir: IsoDir, // Root directory entry
 
-    _unused4: [u8; 34 - core::mem::size_of::<IsoDir>()], // Padding
+    pub _unused4: [u8; 34 - core::mem::size_of::<IsoDir>()], // Padding
 
-    volset_idf: [u8; ISO_VOLSET_LEN], // name of the multiple volume set
-    pub_idf: [u8; ISO_PUBIDF_LEN], // Publisher name
-    dprep_idf: [u8; ISO_DPREP_LEN], // Data preparer name
-    app_idf: [u8; ISO_APP_LEN], // Application name
+    pub volset_idf: [u8; ISO_VOLSET_LEN], // name of the multiple volume set
+    pub pub_idf: [u8; ISO_PUBIDF_LEN], // Publisher name
+    pub dprep_idf: [u8; ISO_DPREP_LEN], // Data preparer name
+    pub app_idf: [u8; ISO_APP_LEN], // Application name
 
-    copyright_file: [u8; ISO_CPRFIL_LEN], // Copyright file name in root dir
-    abstract_file: [u8; ISO_ABSFIL_LEN], // Abstract file name in root dir
-    bibli_file: [u8; ISO_BIBFIL_LEN], // Bibliograpgic file name in root dir
-    date_creat: [u8; ISO_LDATE_LEN], // Creation date
-    date_modif: [u8; ISO_LDATE_LEN], // Modification date
-    date_expir: [u8; ISO_LDATE_LEN], // Expiration date
-    date_effect: [u8; ISO_LDATE_LEN], // Effective date
+    pub copyright_file: [u8; ISO_CPRFIL_LEN], // Copyright file name in root dir
+    pub abstract_file: [u8; ISO_ABSFIL_LEN], // Abstract file name in root dir
+    pub bibli_file: [u8; ISO_BIBFIL_LEN], // Bibliograpgic file name in root dir
+    pub date_creat: [u8; ISO_LDATE_LEN], // Creation date
+    pub date_modif: [u8; ISO_LDATE_LEN], // Modification date
+    pub date_expir: [u8; ISO_LDATE_LEN], // Expiration date
+    pub date_effect: [u8; ISO_LDATE_LEN], // Effective date
 
-    file_struct_version: u8, // File structure version (1)
+    pub file_struct_version: u8, // File structure version (1)
 }

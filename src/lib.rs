@@ -57,11 +57,8 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
 
-    serial_println!("{}", core::mem::size_of::<IsoPrimVolDesc>());
-    serial_println!("{}", core::mem::size_of::<IsoDir>());
-    serial_println!("{}", core::mem::size_of::<MultiEndian32>());
-
     let mut executor = Executor::new();
     executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.spawn(Task::new(fs::iso::init_prim_vol_desc()));
     executor.run();
 }

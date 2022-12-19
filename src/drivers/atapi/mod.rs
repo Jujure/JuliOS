@@ -248,7 +248,7 @@ impl ATABus {
         self.wait_command_end();
     }
 
-    pub async fn read_block(&mut self, lba: u32) {
+    pub async fn read_block(&mut self, lba: u32) -> [u8; CD_SECTOR_SIZE] {
         let mut packet = SCSIPacket::new();
 
         packet.op_code = SCSI_READ_12;
@@ -277,6 +277,8 @@ impl ATABus {
         //(*INTERRUPT_FUTURE).await;
 
         self.wait_command_end();
+
+        self.block
     }
 
     fn wait_busy(&mut self) {
