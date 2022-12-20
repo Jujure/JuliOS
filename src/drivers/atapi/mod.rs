@@ -9,6 +9,7 @@ use core::convert::TryInto;
 
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::utils::AsyncMutex;
 use x86_64::instructions::port::Port;
 
 const CD_SECTOR_SIZE: usize = 2048;
@@ -58,15 +59,16 @@ static ATAPI_SIG: [u8; 4] = [
 ];
 
 lazy_static! {
-    pub static ref DRIVE: Mutex<Option<ATABus>> = {
-        Mutex::new(ATABus::discover_atapi_drive())
+    pub static ref DRIVE: AsyncMutex<Option<ATABus>> = {
+        AsyncMutex::new(ATABus::discover_atapi_drive())
     };
 }
 
 
-pub fn init() {
+pub async fn init() {
     println!("Detecting drives");
-    match DRIVE.lock().as_ref() {
+    let guard = DRIVE.lock().await;
+    match guard.as_ref() {
         None => println!("No drive detected :("),
         Some(drive) => {
             let drive_type = match drive.current_drive {
@@ -322,6 +324,7 @@ impl ATABus {
 
 
 pub async fn print_block() {
-    DRIVE.lock().as_mut().unwrap().read_block(500).await;
-    serial_println!("{:x?}", DRIVE.lock().as_mut().unwrap().block);
+    let mut guard = DRIVE.lock().await;
+    guard.as_mut().unwrap().read_block(500).await;
+    serial_println!("{:x?}", guard.as_mut().unwrap().block);
 }

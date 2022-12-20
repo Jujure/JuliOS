@@ -4,14 +4,14 @@ use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut, Drop};
 use core::sync::atomic::{AtomicBool, Ordering};
 use core::task::{Context, Poll};
-use alloc::rc::Rc;
+use alloc::sync::Arc;
 
 use futures_util::task::AtomicWaker;
 
 #[derive(Clone)]
 struct Lock {
-    lock: Rc<AtomicBool>,
-    waker: Rc<AtomicWaker>,
+    lock: Arc<AtomicBool>,
+    waker: Arc<AtomicWaker>,
 }
 
 pub struct AsyncMutex<T> {
@@ -29,8 +29,8 @@ where
 impl Lock {
     fn new() -> Self {
         Lock {
-            lock: Rc::new(AtomicBool::new(false)),
-            waker: Rc::new(AtomicWaker::new()),
+            lock: Arc::new(AtomicBool::new(false)),
+            waker: Arc::new(AtomicWaker::new()),
         }
     }
 
@@ -86,6 +86,8 @@ impl<T> AsyncMutex<T> {
     }
 }
 
+unsafe impl<T> Send for AsyncMutex<T> {}
+unsafe impl<T> Sync for AsyncMutex<T> {}
 
 impl<T> Drop for AsyncMutexGuard<'_, T> {
     fn drop(&mut self) {
