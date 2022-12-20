@@ -1,6 +1,6 @@
 pub mod iso9660;
 
-use crate::serial_println;
+use crate::println;
 use crate::drivers::atapi::{DRIVE};
 use crate::utils::unserialize;
 use iso9660::{IsoPrimVolDesc};
@@ -15,5 +15,5 @@ pub async fn init_prim_vol_desc() {
         .await;
     let prim_vol_desc: &IsoPrimVolDesc = unserialize::<IsoPrimVolDesc>(desc_block.as_ptr());
 
-    serial_println!("{:?}", prim_vol_desc.std_identifier);
+    println!("{:?}", alloc::string::String::from_utf8_lossy(&prim_vol_desc.std_identifier));
 }
