@@ -19,8 +19,6 @@ use drivers::vga::{self, Color, ColorCode};
 use multiboot2::BootInformation;
 use task::{executor::Executor, keyboard, Task};
 
-use fs::iso::iso9660::{IsoDir, IsoPrimVolDesc, MultiEndian32};
-
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
     panic!("Allocation error: {:?}", layout)
