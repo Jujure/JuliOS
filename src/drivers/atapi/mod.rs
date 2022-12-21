@@ -322,7 +322,7 @@ impl ATABus {
 }
 
 
-pub async fn print_block() {
-    let block = DRIVE.lock().await.as_mut().unwrap().read_block(500).await;
+pub async fn print_block(lba: u32) {
+    let block = DRIVE.lock().await.as_mut().unwrap().read_block(lba).await;
     serial_println!("{:x?}", block);
 }
