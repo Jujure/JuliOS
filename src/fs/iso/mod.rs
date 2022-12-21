@@ -6,10 +6,10 @@ use crate::utils::unserialize;
 use iso9660::{IsoPrimVolDesc};
 
 pub async fn init_prim_vol_desc() {
-    let mut guard = DRIVE
+    let desc_block = DRIVE
         .lock()
-        .await;
-    let desc_block = guard.as_mut()
+        .await
+        .as_mut()
         .unwrap()
         .read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK)
         .await;

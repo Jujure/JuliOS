@@ -67,8 +67,7 @@ lazy_static! {
 
 pub async fn init() {
     println!("Detecting drives");
-    let guard = DRIVE.lock().await;
-    match guard.as_ref() {
+    match DRIVE.lock().await.as_ref() {
         None => println!("No drive detected :("),
         Some(drive) => {
             let drive_type = match drive.current_drive {
@@ -324,7 +323,6 @@ impl ATABus {
 
 
 pub async fn print_block() {
-    let mut guard = DRIVE.lock().await;
-    guard.as_mut().unwrap().read_block(500).await;
-    serial_println!("{:x?}", guard.as_mut().unwrap().block);
+    let block = DRIVE.lock().await.as_mut().unwrap().read_block(500).await;
+    serial_println!("{:x?}", block);
 }
