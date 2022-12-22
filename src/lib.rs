@@ -9,6 +9,7 @@ mod memory;
 mod task;
 mod fs;
 mod utils;
+mod fd;
 
 //#[macro_use]
 extern crate alloc;
@@ -57,6 +58,12 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     let mut executor = Executor::new();
     executor.spawn(Task::new(drivers::atapi::init()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
-    executor.spawn(Task::new(fs::iso::init_prim_vol_desc()));
+    executor.spawn(Task::new(get_file()));
     executor.run();
+}
+
+
+async fn get_file() {
+    let fd = fs::iso::open().await;
+    fd.borrow_mut().read(0 as *mut u8, 0);
 }

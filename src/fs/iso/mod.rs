@@ -1,11 +1,17 @@
 pub mod iso9660;
+mod fd;
 
 use crate::println;
 use crate::drivers::atapi::{DRIVE};
+use crate::fd::{FDId, FD_TABLE, FDt};
 use crate::utils::unserialize;
-use iso9660::{IsoPrimVolDesc};
 
-pub async fn init_prim_vol_desc() {
+use iso9660::{IsoPrimVolDesc};
+use fd::IsoFD;
+
+use alloc::sync::Arc;
+
+pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
     let desc_block = DRIVE
         .lock()
         .await
@@ -13,7 +19,11 @@ pub async fn init_prim_vol_desc() {
         .unwrap()
         .read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK)
         .await;
-    let prim_vol_desc: &IsoPrimVolDesc = unserialize::<IsoPrimVolDesc>(desc_block.as_ptr());
+    *unserialize::<IsoPrimVolDesc>(desc_block.as_ptr())
+}
 
-    println!("{:?}", alloc::string::String::from_utf8_lossy(&prim_vol_desc.std_identifier));
+pub async fn open() -> FDt {
+    let fd = IsoFD::new();
+    FD_TABLE.lock().await.register_fd(fd.clone());
+    fd
 }

@@ -3,12 +3,14 @@ const ISO_BLOCK_SIZE: usize = 2048;
 // Twin values structs
 
 #[repr(C, packed)]
+#[derive(Copy, Clone)]
 pub struct MultiEndian32 {
     le: u32, // Little endian value
     be: u32, // Big endian value
 }
 
 #[repr(C, packed)]
+#[derive(Copy, Clone)]
 pub struct MultiEndian16 {
     le: u16, // Little endian value
     be: u16, // Big endian value
@@ -18,6 +20,7 @@ pub struct MultiEndian16 {
 // Path table structure
 
 #[repr(C, packed)]
+#[derive(Copy, Clone)]
 struct IsoPathTable {
     idf_len: u8, // Identifier name length
     ext_size: u8, // Extended attribute record length
@@ -41,6 +44,7 @@ impl IsoPathTable {
 const ISO_DATE_LEN: usize = 7;
 
 #[repr(u8)]
+#[derive(Copy, Clone)]
 enum IsoFileType {
     HIDDEN = 0x1, // Hidden file
     ISDIR = 0x2, // Directory
@@ -51,6 +55,7 @@ enum IsoFileType {
 }
 
 #[repr(C, packed)]
+#[derive(Copy, Clone)]
 pub struct IsoDir {
     dir_size: u8, // Length of directory record
     ext_size: u8, // Length of extended attribute record
@@ -94,6 +99,7 @@ const ISO_BIBFIL_LEN: usize = 37;
 const ISO_LDATE_LEN: usize = 17;
 
 #[repr(C, packed)]
+#[derive(Copy, Clone)]
 pub struct IsoPrimVolDesc {
     pub vol_desc_type: u8, // Volume descripto type (1)
     pub std_identifier: [u8; 5], // standard identifier ("CD001")

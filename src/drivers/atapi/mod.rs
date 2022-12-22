@@ -8,7 +8,6 @@ use interrupt::{INTERRUPT_FUTURE};
 use core::convert::TryInto;
 
 use lazy_static::lazy_static;
-use spin::Mutex;
 use crate::utils::AsyncMutex;
 use x86_64::instructions::port::Port;
 
