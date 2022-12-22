@@ -10,6 +10,7 @@ mod task;
 mod fs;
 mod utils;
 mod fd;
+mod syscalls;
 
 //#[macro_use]
 extern crate alloc;
@@ -64,6 +65,6 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
 
 
 async fn get_file() {
-    let fd = fs::iso::open().await;
+    let fd = fs::iso::open("test", syscalls::io::O_RDONLY).await.unwrap();
     fd.borrow_mut().read(&[], 0).await;
 }

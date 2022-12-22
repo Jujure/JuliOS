@@ -6,7 +6,7 @@ use crate::drivers::atapi::{DRIVE};
 use crate::fd::{FD_TABLE, FDt};
 use crate::utils::unserialize;
 
-use iso9660::{IsoPrimVolDesc};
+use iso9660::{IsoPrimVolDesc, IsoDir};
 use fd::IsoFD;
 
 pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
@@ -20,8 +20,18 @@ pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
     *unserialize::<IsoPrimVolDesc>(desc_block.as_ptr())
 }
 
-pub async fn open() -> FDt {
+pub async fn open(path: &str, flags: u32) -> Option<FDt> {
+    if flags != crate::syscalls::io::O_RDONLY {
+        return None;
+    }
+
+    let voldesc = get_prim_vol_desc().await;
+
+    if voldesc.std_identifier != "CD001".as_bytes() {
+        return None;
+    }
+
     let fd = IsoFD::new();
     FD_TABLE.lock().await.register_fd(fd.clone());
-    fd
+    Some(fd)
 }
