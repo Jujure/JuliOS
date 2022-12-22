@@ -19,6 +19,7 @@ linked_list_allocator = "0.9.0"
 postcard = "1.0.0"
 serde = { version = "1.0", default-features = false, features = ["alloc"] }
 heapless = "0.7.16"
+async-trait = "0.1.60"
 
 [dependencies.lazy_static]
 version = "1.0"

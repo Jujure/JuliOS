@@ -1,6 +1,7 @@
 use crate::utils::AsyncMutex;
 
-use alloc::{collections::BTreeMap, sync::Arc};
+use alloc::{collections::BTreeMap, sync::Arc, boxed::Box};
+use async_trait::async_trait;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 
@@ -35,7 +36,8 @@ impl FDTable {
     }
 }
 
+#[async_trait]
 pub trait FileDescriptor {
-    fn write(&mut self, buf: *const u8, count: usize) -> isize;
-    fn read(&mut self, buf: *mut u8, count: usize) -> isize;
+    async fn write(&mut self, buf: &[u8], count: usize) -> isize;
+    async fn read(&mut self, buf: &[u8], count: usize) -> isize;
 }

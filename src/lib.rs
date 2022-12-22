@@ -65,5 +65,5 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
 
 async fn get_file() {
     let fd = fs::iso::open().await;
-    fd.borrow_mut().read(0 as *mut u8, 0);
+    fd.borrow_mut().read(&[], 0).await;
 }

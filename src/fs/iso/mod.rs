@@ -3,13 +3,11 @@ mod fd;
 
 use crate::println;
 use crate::drivers::atapi::{DRIVE};
-use crate::fd::{FDId, FD_TABLE, FDt};
+use crate::fd::{FD_TABLE, FDt};
 use crate::utils::unserialize;
 
 use iso9660::{IsoPrimVolDesc};
 use fd::IsoFD;
-
-use alloc::sync::Arc;
 
 pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
     let desc_block = DRIVE

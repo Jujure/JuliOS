@@ -1,7 +1,8 @@
 use crate::println;
 use crate::fd::{FDId, FileDescriptor, FDt};
 
-use alloc::sync::Arc;
+use alloc::{sync::Arc, boxed::Box};
+use async_trait::async_trait;
 use core::cell::RefCell;
 
 pub struct IsoFD {
@@ -16,12 +17,13 @@ impl IsoFD {
     }
 }
 
+#[async_trait]
 impl FileDescriptor for IsoFD {
-    fn write(&mut self, buf: *const u8, count: usize) -> isize {
+    async fn write(&mut self, buf: &[u8], count: usize) -> isize {
         0
     }
 
-    fn read(&mut self, buf: *mut u8, count: usize) -> isize {
+    async fn read(&mut self, buf: &[u8], count: usize) -> isize {
         println!("Read from fd");
         0
     }
