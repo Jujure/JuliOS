@@ -18,7 +18,7 @@ pub struct IsoFS {
 
 #[async_trait(?Send)]
 impl FileSystem for IsoFS {
-    async fn open(path: &str, flags: u32) -> Option<FDt> {
+    async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
         if flags != crate::syscalls::io::O_RDONLY {
             return None;
         }
