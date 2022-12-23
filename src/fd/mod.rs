@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 
-pub type FDt = Arc<RefCell<dyn FileDescriptor>>;
+pub type FDt = Arc<AsyncMutex<dyn FileDescriptor>>;
 
 lazy_static! {
     pub static ref FD_TABLE: AsyncMutex<FDTable> = {
@@ -33,7 +33,7 @@ impl FDTable {
         FDTable { table: BTreeMap::new() }
     }
 
-    pub async fn register_fd(&mut self, fd: FDt) {
+    pub fn register_fd(&mut self, fd: FDt) {
         // TODO
         self.table.insert(fd.borrow().get_fd(), fd.clone());
         println!("Registered fd: {:?}", self.table.get(&FDId(1)).unwrap().borrow().get_fd());

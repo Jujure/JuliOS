@@ -14,7 +14,7 @@ struct Lock {
     waker: Arc<AtomicWaker>,
 }
 
-pub struct AsyncMutex<T> {
+pub struct AsyncMutex<T: ?Sized> {
     lock: Lock,
     inner: UnsafeCell<T>,
 }

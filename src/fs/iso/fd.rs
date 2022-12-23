@@ -1,5 +1,6 @@
 use crate::println;
 use crate::fd::{FDId, FileDescriptor, FDt};
+use crate::utils::mutex::AsyncMutex;
 
 use alloc::{sync::Arc, boxed::Box};
 use async_trait::async_trait;
@@ -11,7 +12,7 @@ pub struct IsoFD {
 
 impl IsoFD {
     pub fn new() -> FDt {
-        Arc::new(RefCell::new(IsoFD {
+        Arc::new(AsyncMutex::new(IsoFD {
             fd: FDId::new(),
         }))
     }
