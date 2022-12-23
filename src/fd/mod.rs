@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 
-pub type FDt = Arc<AsyncMutex<dyn FileDescriptor>>;
+pub type FDt = Arc<RefCell<dyn FileDescriptor>>;
 
 lazy_static! {
     pub static ref FD_TABLE: AsyncMutex<FDTable> = {

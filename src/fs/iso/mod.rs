@@ -13,12 +13,12 @@ use fd::IsoFD;
 use alloc::{sync::Arc, boxed::Box};
 use async_trait::async_trait;
 
-struct IsoFS {
+pub struct IsoFS {
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl FileSystem for IsoFS {
-    async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
+    async fn open(path: &str, flags: u32) -> Option<FDt> {
         if flags != crate::syscalls::io::O_RDONLY {
             return None;
         }

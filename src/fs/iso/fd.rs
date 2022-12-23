@@ -12,7 +12,7 @@ pub struct IsoFD {
 
 impl IsoFD {
     pub fn new() -> FDt {
-        Arc::new(AsyncMutex::new(IsoFD {
+        Arc::new(RefCell::new(IsoFD {
             fd: FDId::new(),
         }))
     }
