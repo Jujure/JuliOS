@@ -211,7 +211,8 @@ impl ATABus {
         }
     }
 
-    pub fn sync_read_block(&mut self, lba: u32) {
+    #[allow(dead_code)]
+    pub fn sync_read_block(&mut self, lba: u32) -> [u8; CD_SECTOR_SIZE] {
         let mut packet = SCSIPacket::new();
 
         packet.op_code = SCSI_READ_12;
@@ -246,6 +247,8 @@ impl ATABus {
             }
         }
         self.wait_command_end();
+
+        self.block
     }
 
     pub async fn read_block(&mut self, lba: u32) -> [u8; CD_SECTOR_SIZE] {
@@ -321,6 +324,7 @@ impl ATABus {
 }
 
 
+#[allow(dead_code)]
 pub async fn print_block(lba: u32) {
     let block = DRIVE.lock().await.as_mut().unwrap().read_block(lba).await;
     serial_println!("{:x?}", block);

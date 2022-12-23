@@ -3,6 +3,7 @@ use x86_64::structures::idt::InterruptStackFrame;
 
 static mut TICKS: u64 = 0;
 
+#[allow(dead_code)]
 pub fn gettick() -> u64 {
     unsafe { return TICKS }
 }

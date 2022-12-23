@@ -32,6 +32,6 @@ pub async fn open(path: &str, flags: u32) -> Option<FDt> {
     }
 
     let fd = IsoFD::new();
-    FD_TABLE.lock().await.register_fd(fd.clone());
+    FD_TABLE.lock().await.register_fd(fd.clone()).await;
     Some(fd)
 }

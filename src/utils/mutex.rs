@@ -48,18 +48,18 @@ impl Future for Lock {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        if self.try_lock() {
+        if !self.try_lock() {
             return Poll::Ready(());
         }
 
         self.waker.register(&cx.waker());
 
         match self.try_lock() {
-            true => {
+            false => {
                 self.waker.take();
                 Poll::Ready(())
             },
-            false => Poll::Pending,
+            true => Poll::Pending,
         }
     }
 }

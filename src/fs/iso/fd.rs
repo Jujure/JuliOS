@@ -19,6 +19,10 @@ impl IsoFD {
 
 #[async_trait]
 impl FileDescriptor for IsoFD {
+    fn get_fd(&self) -> FDId {
+        self.fd
+    }
+
     async fn write(&mut self, buf: &[u8], count: usize) -> isize {
         0
     }
