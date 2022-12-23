@@ -4,12 +4,8 @@ use crate::memory::gdt;
 use crate::println;
 use lazy_static::lazy_static;
 use pic::{
-    init_pic,
-    keyboard_interrupt_handler,
-    timer_interrupt_handler,
-    disk1_interrupt_handler,
-    disk2_interrupt_handler,
-    InterruptIndex
+    disk1_interrupt_handler, disk2_interrupt_handler, init_pic, keyboard_interrupt_handler,
+    timer_interrupt_handler, InterruptIndex,
 };
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};

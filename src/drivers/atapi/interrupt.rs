@@ -3,26 +3,24 @@ use core::pin::Pin;
 use core::sync::atomic::{AtomicBool, Ordering};
 use core::task::{Context, Poll};
 
-use lazy_static::lazy_static;
 use futures_util::task::AtomicWaker;
+use lazy_static::lazy_static;
 
 lazy_static! {
     pub static ref INTERRUPT_FUTURE: InterruptFuture = InterruptFuture::new();
-
     static ref INTERRUPT: AtomicBool = AtomicBool::new(false);
 }
 
 static WAKER: AtomicWaker = AtomicWaker::new();
-
 
 pub(crate) fn mark_interrupt() {
     INTERRUPT.store(true, Ordering::Relaxed);
     WAKER.wake();
 }
 
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone)]
 pub struct InterruptFuture {
-    _private:(),
+    _private: (),
 }
 
 impl InterruptFuture {
@@ -51,7 +49,7 @@ impl Future for InterruptFuture {
             true => {
                 WAKER.take();
                 Poll::Ready(())
-            },
+            }
             false => Poll::Pending,
         }
     }

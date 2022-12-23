@@ -1,20 +1,19 @@
-pub mod iso9660;
 mod fd;
+pub mod iso9660;
 
+use crate::drivers::atapi::DRIVE;
+use crate::fd::{FDt, FD_TABLE};
 use crate::println;
-use crate::drivers::atapi::{DRIVE};
-use crate::fd::{FD_TABLE, FDt};
 use crate::utils::unserialize;
 
 use super::FileSystem;
-use iso9660::{IsoPrimVolDesc, IsoDir};
 use fd::IsoFD;
+use iso9660::{IsoDir, IsoPrimVolDesc};
 
-use alloc::{sync::Arc, boxed::Box};
+use alloc::{boxed::Box, sync::Arc};
 use async_trait::async_trait;
 
-pub struct IsoFS {
-}
+pub struct IsoFS {}
 
 #[async_trait(?Send)]
 impl FileSystem for IsoFS {

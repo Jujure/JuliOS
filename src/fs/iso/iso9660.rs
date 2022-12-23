@@ -16,28 +16,24 @@ pub struct MultiEndian16 {
     be: u16, // Big endian value
 }
 
-
 // Path table structure
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 struct IsoPathTable {
-    idf_len: u8, // Identifier name length
-    ext_size: u8, // Extended attribute record length
-    data_blk: u8, // File data block index
+    idf_len: u8,     // Identifier name length
+    ext_size: u8,    // Extended attribute record length
+    data_blk: u8,    // File data block index
     parent_dir: u16, // Number of the parent dir
-    idf: [u8; 0] // Directory name, of size Self::idf_len
+    idf: [u8; 0],    // Directory name, of size Self::idf_len
 }
 
 impl IsoPathTable {
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize)
-        }
+        unsafe { core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize) }
     }
 }
-
 
 // Directory structure
 
@@ -46,20 +42,20 @@ const ISO_DATE_LEN: usize = 7;
 #[repr(u8)]
 #[derive(Copy, Clone)]
 enum IsoFileType {
-    HIDDEN = 0x1, // Hidden file
-    ISDIR = 0x2, // Directory
-    ASSOCIAT = 0x4, // Associated
-    USEEXT = 0x8, //
-    USEPERM = 0x10, //
-    MULTIDIR = 0x80 // 
+    HIDDEN = 0x1,    // Hidden file
+    ISDIR = 0x2,     // Directory
+    ASSOCIAT = 0x4,  // Associated
+    USEEXT = 0x8,    //
+    USEPERM = 0x10,  //
+    MULTIDIR = 0x80, //
 }
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct IsoDir {
-    dir_size: u8, // Length of directory record
-    ext_size: u8, // Length of extended attribute record
-    data_blk: MultiEndian32, // File data block index
+    dir_size: u8,             // Length of directory record
+    ext_size: u8,             // Length of extended attribute record
+    data_blk: MultiEndian32,  // File data block index
     file_size: MultiEndian32, // File size
     date: [u8; ISO_DATE_LEN],
     file_type: IsoFileType,
@@ -69,19 +65,16 @@ pub struct IsoDir {
 
     vol_seq: MultiEndian16,
 
-    idf_len: u8, // File name length
+    idf_len: u8,  // File name length
     idf: [u8; 0], // File name
 }
 
 impl IsoDir {
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize)
-        }
+        unsafe { core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize) }
     }
 }
-
 
 // Primary volume descriptor structure
 
@@ -101,9 +94,9 @@ const ISO_LDATE_LEN: usize = 17;
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct IsoPrimVolDesc {
-    pub vol_desc_type: u8, // Volume descripto type (1)
+    pub vol_desc_type: u8,       // Volume descripto type (1)
     pub std_identifier: [u8; 5], // standard identifier ("CD001")
-    pub vol_desc_version: u8, // Volume descriptor version (1)
+    pub vol_desc_version: u8,    // Volume descriptor version (1)
 
     pub _unused1: u8,
 
@@ -117,12 +110,12 @@ pub struct IsoPrimVolDesc {
     pub _unused3: [u8; 32],
 
     pub vol_set_size: MultiEndian16, // The Volume Set size of the volume
-    pub vol_seq_num: MultiEndian16, // The number of the volume in the set
+    pub vol_seq_num: MultiEndian16,  // The number of the volume in the set
     pub vol_blk_size: MultiEndian16, // The size in bytes of a logical block
 
     pub path_table_size: MultiEndian32, // Length in bytes of the path table
-    pub le_path_table_blk: u32, // Path table block index little endian
-    pub le_opt_path_table_blk: u32, // Optionnal path table block index little endian
+    pub le_path_table_blk: u32,         // Path table block index little endian
+    pub le_opt_path_table_blk: u32,     // Optionnal path table block index little endian
     pub be_path_table_blk: u32,
     pub be_opt_path_table_blk: u32,
 
@@ -131,17 +124,17 @@ pub struct IsoPrimVolDesc {
     pub _unused4: [u8; 34 - core::mem::size_of::<IsoDir>()], // Padding
 
     pub volset_idf: [u8; ISO_VOLSET_LEN], // name of the multiple volume set
-    pub pub_idf: [u8; ISO_PUBIDF_LEN], // Publisher name
-    pub dprep_idf: [u8; ISO_DPREP_LEN], // Data preparer name
-    pub app_idf: [u8; ISO_APP_LEN], // Application name
+    pub pub_idf: [u8; ISO_PUBIDF_LEN],    // Publisher name
+    pub dprep_idf: [u8; ISO_DPREP_LEN],   // Data preparer name
+    pub app_idf: [u8; ISO_APP_LEN],       // Application name
 
     pub copyright_file: [u8; ISO_CPRFIL_LEN], // Copyright file name in root dir
-    pub abstract_file: [u8; ISO_ABSFIL_LEN], // Abstract file name in root dir
-    pub bibli_file: [u8; ISO_BIBFIL_LEN], // Bibliograpgic file name in root dir
-    pub date_creat: [u8; ISO_LDATE_LEN], // Creation date
-    pub date_modif: [u8; ISO_LDATE_LEN], // Modification date
-    pub date_expir: [u8; ISO_LDATE_LEN], // Expiration date
-    pub date_effect: [u8; ISO_LDATE_LEN], // Effective date
+    pub abstract_file: [u8; ISO_ABSFIL_LEN],  // Abstract file name in root dir
+    pub bibli_file: [u8; ISO_BIBFIL_LEN],     // Bibliograpgic file name in root dir
+    pub date_creat: [u8; ISO_LDATE_LEN],      // Creation date
+    pub date_modif: [u8; ISO_LDATE_LEN],      // Modification date
+    pub date_expir: [u8; ISO_LDATE_LEN],      // Expiration date
+    pub date_effect: [u8; ISO_LDATE_LEN],     // Effective date
 
     pub file_struct_version: u8, // File structure version (1)
 }

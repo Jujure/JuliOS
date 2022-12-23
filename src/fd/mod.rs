@@ -1,7 +1,7 @@
 use crate::println;
 use crate::utils::AsyncMutex;
 
-use alloc::{collections::BTreeMap, sync::Arc, boxed::Box};
+use alloc::{boxed::Box, collections::BTreeMap, sync::Arc};
 use async_trait::async_trait;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
@@ -9,9 +9,7 @@ use lazy_static::lazy_static;
 pub type FDt = Arc<RefCell<dyn FileDescriptor>>;
 
 lazy_static! {
-    pub static ref FD_TABLE: AsyncMutex<FDTable> = {
-        AsyncMutex::new(FDTable::new())
-    };
+    pub static ref FD_TABLE: AsyncMutex<FDTable> = { AsyncMutex::new(FDTable::new()) };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -30,13 +28,18 @@ pub struct FDTable {
 
 impl FDTable {
     pub fn new() -> Self {
-        FDTable { table: BTreeMap::new() }
+        FDTable {
+            table: BTreeMap::new(),
+        }
     }
 
     pub fn register_fd(&mut self, fd: FDt) {
         // TODO
         self.table.insert(fd.borrow().get_fd(), fd.clone());
-        println!("Registered fd: {:?}", self.table.get(&FDId(1)).unwrap().borrow().get_fd());
+        println!(
+            "Registered fd: {:?}",
+            self.table.get(&FDId(1)).unwrap().borrow().get_fd()
+        );
     }
 }
 

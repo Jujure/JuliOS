@@ -1,5 +1,5 @@
-pub mod serialize;
 pub mod mutex;
+pub mod serialize;
 
-pub use serialize::unserialize;
 pub use mutex::AsyncMutex;
+pub use serialize::unserialize;

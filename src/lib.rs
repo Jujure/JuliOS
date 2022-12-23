@@ -4,23 +4,23 @@
 #![feature(alloc_error_handler)]
 
 mod drivers;
+mod fd;
+mod fs;
 mod interrupts;
 mod memory;
-mod task;
-mod fs;
-mod utils;
-mod fd;
 mod syscalls;
+mod task;
+mod utils;
 
 //#[macro_use]
 extern crate alloc;
 extern crate multiboot2;
 
+use crate::fs::FileSystem;
 use core::panic::PanicInfo;
 use drivers::vga::{self, Color, ColorCode};
 use multiboot2::BootInformation;
 use task::{executor::Executor, keyboard, Task};
-use crate::fs::FileSystem;
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
@@ -64,8 +64,12 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     executor.run();
 }
 
-
 async fn get_file() {
-    let fd = fs::VIRTUAL_FS.lock().await.open("test", syscalls::io::O_RDONLY).await.unwrap();
+    let fd = fs::VIRTUAL_FS
+        .lock()
+        .await
+        .open("test", syscalls::io::O_RDONLY)
+        .await
+        .unwrap();
     fd.borrow_mut().read(&[], 0).await;
 }

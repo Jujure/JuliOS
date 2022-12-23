@@ -1,10 +1,10 @@
-use core::future::Future;
-use core::pin::Pin;
+use alloc::sync::Arc;
 use core::cell::UnsafeCell;
+use core::future::Future;
 use core::ops::{Deref, DerefMut, Drop};
+use core::pin::Pin;
 use core::sync::atomic::{AtomicBool, Ordering};
 use core::task::{Context, Poll};
-use alloc::sync::Arc;
 
 use futures_util::task::AtomicWaker;
 
@@ -23,7 +23,7 @@ pub struct AsyncMutexGuard<'a, T>
 where
     T: 'a,
 {
-    mutex: &'a AsyncMutex<T>
+    mutex: &'a AsyncMutex<T>,
 }
 
 impl Lock {
@@ -58,7 +58,7 @@ impl Future for Lock {
             false => {
                 self.waker.take();
                 Poll::Ready(())
-            },
+            }
             true => Poll::Pending,
         }
     }
@@ -98,16 +98,12 @@ impl<T> Drop for AsyncMutexGuard<'_, T> {
 impl<T> Deref for AsyncMutexGuard<'_, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        unsafe {
-            &*self.mutex.inner.get()
-        }
+        unsafe { &*self.mutex.inner.get() }
     }
 }
 
 impl<T> DerefMut for AsyncMutexGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe {
-            &mut *self.mutex.inner.get()
-        }
+        unsafe { &mut *self.mutex.inner.get() }
     }
 }

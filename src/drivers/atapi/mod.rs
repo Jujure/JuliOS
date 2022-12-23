@@ -1,20 +1,20 @@
-mod scsi;
 pub mod interrupt;
+mod scsi;
 
 use crate::{println, serial_println};
-use scsi::{SCSIPacket};
-use interrupt::{INTERRUPT_FUTURE};
+use interrupt::INTERRUPT_FUTURE;
+use scsi::SCSIPacket;
 
 use core::convert::TryInto;
 
-use lazy_static::lazy_static;
 use crate::utils::AsyncMutex;
+use lazy_static::lazy_static;
 use x86_64::instructions::port::Port;
 
 const CD_SECTOR_SIZE: usize = 2048;
 
 // Data buses
-const ATA_BUS_PRIMARY: u16= 0x1f0;
+const ATA_BUS_PRIMARY: u16 = 0x1f0;
 const ATA_BUS_SECONDARY: u16 = 0x170;
 
 // Drives
@@ -54,15 +54,13 @@ static ATAPI_SIG: [u8; 4] = [
     ATAPI_SIG_SC,
     ATAPI_SIG_LBA_LO,
     ATAPI_SIG_LBA_MI,
-    ATAPI_SIG_LBA_HI
+    ATAPI_SIG_LBA_HI,
 ];
 
 lazy_static! {
-    pub static ref DRIVE: AsyncMutex<Option<ATABus>> = {
-        AsyncMutex::new(ATABus::discover_atapi_drive())
-    };
+    pub static ref DRIVE: AsyncMutex<Option<ATABus>> =
+        { AsyncMutex::new(ATABus::discover_atapi_drive()) };
 }
-
 
 pub async fn init() {
     println!("Detecting drives");
@@ -72,12 +70,12 @@ pub async fn init() {
             let drive_type = match drive.current_drive {
                 ATA_DRIVE_MASTER => "master",
                 ATA_DRIVE_SLAVE => "slave",
-                _ => "bad"
+                _ => "bad",
             };
             let bus = match drive.base_port {
                 ATA_BUS_PRIMARY => "primary",
                 ATA_BUS_SECONDARY => "secondary",
-                _ => "bad"
+                _ => "bad",
             };
             println!("Detected {} drive on {} bus", drive_type, bus);
         }
@@ -100,7 +98,7 @@ pub struct ATABus {
     address3: Port<u8>,
     drive_select: Port<u8>,
     command: Port<u8>, // write
-    status: Port<u8>, // read
+    status: Port<u8>,  // read
     dcr: Port<u8>,
 
     current_drive: u8,
@@ -153,14 +151,14 @@ impl ATABus {
 
             data: Port::new(port),
             features: Port::new(port + 1), // write
-            error: Port::new(port + 1), // read
+            error: Port::new(port + 1),    // read
             sector_count: Port::new(port + 2),
             address1: Port::new(port + 3),
             address2: Port::new(port + 4),
             address3: Port::new(port + 5),
             drive_select: Port::new(port + 6),
             command: Port::new(port + 7), // write
-            status: Port::new(port + 7), // read
+            status: Port::new(port + 7),  // read
             dcr: Port::new(port + 0x206),
 
             current_drive: 0,
@@ -204,7 +202,7 @@ impl ATABus {
         self.wait_packet_request();
 
         for i in (0..raw_packet.len()).step_by(2) {
-            let word = u16::from_le_bytes(raw_packet[i..i+2].try_into().unwrap());
+            let word = u16::from_le_bytes(raw_packet[i..i + 2].try_into().unwrap());
             unsafe {
                 self.data.write(word);
             }
@@ -322,7 +320,6 @@ impl ATABus {
         }
     }
 }
-
 
 #[allow(dead_code)]
 pub async fn print_block(lba: u32) {

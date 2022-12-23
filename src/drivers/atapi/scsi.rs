@@ -1,5 +1,5 @@
-use postcard::{to_vec};
-use serde::{Serialize, Deserialize};
+use postcard::to_vec;
+use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[repr(C, packed)]
@@ -15,7 +15,7 @@ pub struct SCSIPacket {
     transfer_length_milo: u8,
     transfer_length_lo: u8,
     flags_hi: u8,
-    control: u8
+    control: u8,
 }
 
 impl SCSIPacket {
