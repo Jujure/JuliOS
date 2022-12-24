@@ -4,6 +4,7 @@ pub mod iso9660;
 use crate::drivers::atapi::DRIVE;
 use crate::fd::{FDt, FD_TABLE};
 use crate::println;
+use crate::serial_println;
 use crate::utils::unserialize;
 
 use super::FileSystem;
@@ -31,7 +32,7 @@ impl FileSystem for IsoFS {
         }
 
         let root: IsoDir = voldesc.root_dir;
-        let curr_entry_block: [u8; 2048] = DRIVE
+        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE] = DRIVE
             .lock()
             .await
             .as_mut()
@@ -39,15 +40,38 @@ impl FileSystem for IsoFS {
             .read_block(root.data_blk.le)
             .await;
 
-        let curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
+        let mut curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
 
         let path_s: String = String::from(path);
-        let split_path: Vec<&str> = path_s
+        let path_it = path_s
             .split("/")
-            .filter(|p| p != &"")
-            .collect();
+            .filter(|p| p != &"");
 
-        println!("{:?}", split_path);
+        for path_component in path_it {
+            while curr_entry.idf_len != 0 {
+                serial_println!("{:?}", curr_entry.idf_len);
+                serial_println!("{:?}", alloc::str::from_utf8(curr_entry.get_idf()).unwrap());
+
+                if curr_entry.get_idf() == path_component.as_bytes() {
+                    serial_println!("Found {}", path_component);
+                    curr_entry_block = DRIVE
+                        .lock()
+                        .await
+                        .as_mut()
+                        .unwrap()
+                        .read_block(curr_entry.data_blk.le)
+                        .await;
+                    curr_entry = unserialize(curr_entry_block.as_ptr());
+                    break;
+                }
+
+                // Next entry
+                unsafe {
+                    let curr_ptr: *const IsoDir = curr_entry;
+                    curr_entry = &*curr_ptr.cast::<u8>().offset(curr_entry.dir_size as isize).cast::<IsoDir>();
+                }
+            }
+        }
 
         let fd = IsoFD::new();
         FD_TABLE.lock().await.register_fd(fd.clone());

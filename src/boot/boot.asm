@@ -170,7 +170,7 @@ p2_table:
     resb 4096
 
 stack_bottom:
-    resb 4 * 4096
+    resb 100 * 4096
 stack_top:
 
 

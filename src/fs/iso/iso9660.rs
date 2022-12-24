@@ -1,4 +1,4 @@
-const ISO_BLOCK_SIZE: usize = 2048;
+pub const ISO_BLOCK_SIZE: usize = 2048;
 
 // Twin values structs
 
@@ -37,6 +37,7 @@ impl IsoPathTable {
 
 // Directory structure
 
+const ISO_MAX_DIR_DEPTH: usize = 8;
 const ISO_DATE_LEN: usize = 7;
 
 #[repr(u8)]
