@@ -10,7 +10,7 @@ use super::FileSystem;
 use fd::IsoFD;
 use iso9660::{IsoDir, IsoPrimVolDesc};
 
-use alloc::{boxed::Box, sync::Arc};
+use alloc::{boxed::Box, sync::Arc, string::String, vec::Vec};
 use async_trait::async_trait;
 
 pub struct IsoFS {}
@@ -18,15 +18,36 @@ pub struct IsoFS {}
 #[async_trait(?Send)]
 impl FileSystem for IsoFS {
     async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
+        // ISO is a read only file system
         if flags != crate::syscalls::io::O_RDONLY {
             return None;
         }
 
         let voldesc = get_prim_vol_desc().await;
 
+        // Invalid ISO
         if voldesc.std_identifier != "CD001".as_bytes() {
             return None;
         }
+
+        let root: IsoDir = voldesc.root_dir;
+        let curr_entry_block: [u8; 2048] = DRIVE
+            .lock()
+            .await
+            .as_mut()
+            .unwrap()
+            .read_block(root.data_blk.le)
+            .await;
+
+        let curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
+
+        let path_s: String = String::from(path);
+        let split_path: Vec<&str> = path_s
+            .split("/")
+            .filter(|p| p != &"")
+            .collect();
+
+        println!("{:?}", split_path);
 
         let fd = IsoFD::new();
         FD_TABLE.lock().await.register_fd(fd.clone());

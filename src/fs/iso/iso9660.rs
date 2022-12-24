@@ -5,15 +5,15 @@ const ISO_BLOCK_SIZE: usize = 2048;
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct MultiEndian32 {
-    le: u32, // Little endian value
-    be: u32, // Big endian value
+    pub le: u32, // Little endian value
+    pub be: u32, // Big endian value
 }
 
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct MultiEndian16 {
-    le: u16, // Little endian value
-    be: u16, // Big endian value
+    pub le: u16, // Little endian value
+    pub be: u16, // Big endian value
 }
 
 // Path table structure
@@ -41,7 +41,7 @@ const ISO_DATE_LEN: usize = 7;
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
-enum IsoFileType {
+pub enum IsoFileType {
     HIDDEN = 0x1,    // Hidden file
     ISDIR = 0x2,     // Directory
     ASSOCIAT = 0x4,  // Associated
@@ -53,20 +53,20 @@ enum IsoFileType {
 #[repr(C, packed)]
 #[derive(Copy, Clone)]
 pub struct IsoDir {
-    dir_size: u8,             // Length of directory record
-    ext_size: u8,             // Length of extended attribute record
-    data_blk: MultiEndian32,  // File data block index
-    file_size: MultiEndian32, // File size
-    date: [u8; ISO_DATE_LEN],
-    file_type: IsoFileType,
+    pub dir_size: u8,             // Length of directory record
+    pub ext_size: u8,             // Length of extended attribute record
+    pub data_blk: MultiEndian32,  // File data block index
+    pub file_size: MultiEndian32, // File size
+    pub date: [u8; ISO_DATE_LEN],
+    pub file_type: IsoFileType,
 
-    unit_size: u8,
-    gap_size: u8,
+    pub unit_size: u8,
+    pub gap_size: u8,
 
-    vol_seq: MultiEndian16,
+    pub vol_seq: MultiEndian16,
 
-    idf_len: u8,  // File name length
-    idf: [u8; 0], // File name
+    pub idf_len: u8,  // File name length
+    pub idf: [u8; 0], // File name
 }
 
 impl IsoDir {

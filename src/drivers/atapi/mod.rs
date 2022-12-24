@@ -58,8 +58,7 @@ static ATAPI_SIG: [u8; 4] = [
 ];
 
 lazy_static! {
-    pub static ref DRIVE: AsyncMutex<Option<ATABus>> =
-        { AsyncMutex::new(ATABus::discover_atapi_drive()) };
+    pub static ref DRIVE: AsyncMutex<Option<ATABus>> = AsyncMutex::new(ATABus::discover_atapi_drive());
 }
 
 pub async fn init() {

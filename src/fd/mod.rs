@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 pub type FDt = Arc<RefCell<dyn FileDescriptor>>;
 
 lazy_static! {
-    pub static ref FD_TABLE: AsyncMutex<FDTable> = { AsyncMutex::new(FDTable::new()) };
+    pub static ref FD_TABLE: AsyncMutex<FDTable> = AsyncMutex::new(FDTable::new());
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

@@ -11,7 +11,7 @@ use lazy_static::lazy_static;
 pub type FSt = Arc<RefCell<dyn FileSystem>>;
 
 lazy_static! {
-    pub static ref VIRTUAL_FS: AsyncMutex<VirtualFS> = { AsyncMutex::new(VirtualFS::new()) };
+    pub static ref VIRTUAL_FS: AsyncMutex<VirtualFS> = AsyncMutex::new(VirtualFS::new());
 }
 
 #[async_trait(?Send)]
