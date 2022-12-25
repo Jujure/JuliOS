@@ -1,7 +1,7 @@
 mod fd;
 pub mod iso9660;
 
-use crate::drivers::atapi::DRIVE;
+use crate::drivers::atapi::read_block;
 use crate::fd::{FDt, FD_TABLE};
 use crate::println;
 use crate::serial_println;
@@ -32,13 +32,7 @@ impl FileSystem for IsoFS {
         }
 
         let root: IsoDir = voldesc.root_dir;
-        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE] = DRIVE
-            .lock()
-            .await
-            .as_mut()
-            .unwrap()
-            .read_block(root.data_blk.le)
-            .await;
+        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE] = read_block(root.data_blk.le).await;
 
         let mut curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
 
@@ -54,22 +48,13 @@ impl FileSystem for IsoFS {
 
                 if curr_entry.get_idf() == path_component.as_bytes() {
                     serial_println!("Found {}", path_component);
-                    curr_entry_block = DRIVE
-                        .lock()
-                        .await
-                        .as_mut()
-                        .unwrap()
-                        .read_block(curr_entry.data_blk.le)
-                        .await;
+                    curr_entry_block = read_block(curr_entry.data_blk.le).await;
                     curr_entry = unserialize(curr_entry_block.as_ptr());
                     break;
                 }
 
                 // Next entry
-                unsafe {
-                    let curr_ptr: *const IsoDir = curr_entry;
-                    curr_entry = &*curr_ptr.cast::<u8>().offset(curr_entry.dir_size as isize).cast::<IsoDir>();
-                }
+                curr_entry = next_entry(curr_entry);
             }
         }
 
@@ -79,13 +64,11 @@ impl FileSystem for IsoFS {
     }
 }
 
+pub fn next_entry(entry: &IsoDir) -> &IsoDir {
+    crate::utils::ref_raw_offset(entry, entry.dir_size as isize)
+}
+
 pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
-    let desc_block = DRIVE
-        .lock()
-        .await
-        .as_mut()
-        .unwrap()
-        .read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK)
-        .await;
+    let desc_block = read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK).await;
     *unserialize::<IsoPrimVolDesc>(desc_block.as_ptr())
 }

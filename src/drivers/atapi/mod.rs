@@ -325,3 +325,7 @@ pub async fn print_block(lba: u32) {
     let block = DRIVE.lock().await.as_mut().unwrap().read_block(lba).await;
     serial_println!("{:x?}", block);
 }
+
+pub async fn read_block(lba: u32) -> [u8; CD_SECTOR_SIZE] {
+    DRIVE.lock().await.as_mut().unwrap().read_block(lba).await
+}
