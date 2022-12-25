@@ -74,6 +74,8 @@ async fn get_file() {
     let mut buf: [u8; 100] = [0; 100];
     let read = fd.borrow_mut().read(&mut buf, 100).await;
 
-    println!("{:?}", read);
-    println!("{:?}", alloc::str::from_utf8(&buf).unwrap());
+    serial_println!("{:?}", read);
+    serial_println!("{}", alloc::str::from_utf8(&buf).unwrap());
+
+    fs::VIRTUAL_FS.lock().await.close(fd).await;
 }

@@ -1,6 +1,5 @@
 use crate::drivers::atapi::read_block;
-use crate::fd::{FDId, FDt, FileDescriptor};
-use crate::println;
+use crate::fd::{FDId, FDt, FileDescriptor, FD_TABLE};
 
 use super::iso9660::{IsoDir, ISO_BLOCK_SIZE};
 
@@ -16,13 +15,16 @@ pub struct IsoFD {
 }
 
 impl IsoFD {
-    pub fn new(entry: &IsoDir) -> FDt {
-        Arc::new(RefCell::new(IsoFD {
+    pub async fn new(entry: &IsoDir) -> FDt {
+        let fd = Arc::new(RefCell::new(IsoFD {
             fd: FDId::new(),
             offset: 0,
             lba: entry.data_blk.le,
             size: entry.file_size.le,
-        }))
+        }));
+
+        FD_TABLE.lock().await.register_fd(fd.clone());
+        fd
     }
 }
 
@@ -32,8 +34,8 @@ impl FileDescriptor for IsoFD {
         self.fd
     }
 
-    async fn write(&mut self, buf: &[u8], count: usize) -> isize {
-        0
+    async fn write(&mut self, _buf: &[u8], _count: usize) -> isize {
+        -1
     }
 
     #[allow(unaligned_references)]

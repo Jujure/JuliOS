@@ -3,15 +3,13 @@ pub mod iso9660;
 
 use crate::drivers::atapi::read_block;
 use crate::fd::{FDt, FD_TABLE};
-use crate::println;
-use crate::serial_println;
 use crate::utils::unserialize;
 
 use super::FileSystem;
 use fd::IsoFD;
 use iso9660::{IsoDir, IsoPrimVolDesc};
 
-use alloc::{boxed::Box, sync::Arc, string::String, vec::Vec};
+use alloc::{boxed::Box, string::String, vec::Vec};
 use async_trait::async_trait;
 
 pub struct IsoFS {}
@@ -50,7 +48,14 @@ impl FileSystem for IsoFS {
                 // Found entry
                 if curr_entry.matches(path_component) {
                     found = true;
+
+                    // Not the last component, go 1 directory deeper
                     if path_component != path_split[path_split.len() - 1] {
+                        // Not a directory
+                        if curr_entry.file_type != iso9660::IsoFileType::ISDIR {
+                            return None;
+                        }
+                        // Deeper entries
                         curr_entry_block = read_block(curr_entry.data_blk.le).await;
                         curr_entry = unserialize(curr_entry_block.as_ptr());
                     }
@@ -60,14 +65,18 @@ impl FileSystem for IsoFS {
                 // Next entry
                 curr_entry = curr_entry.next_entry();
             }
+
+            // File not found
             if !found {
                 return None;
             }
         }
 
-        let fd = IsoFD::new(curr_entry);
-        FD_TABLE.lock().await.register_fd(fd.clone());
-        Some(fd)
+        Some(IsoFD::new(curr_entry).await)
+    }
+
+    async fn close(&mut self, fd: FDt) {
+        FD_TABLE.lock().await.unregister_fd(fd.clone());
     }
 }
 

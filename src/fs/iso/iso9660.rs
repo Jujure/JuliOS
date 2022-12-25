@@ -28,6 +28,7 @@ struct IsoPathTable {
     idf: [u8; 0],    // Directory name, of size Self::idf_len
 }
 
+#[allow(dead_code)]
 impl IsoPathTable {
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
@@ -37,11 +38,13 @@ impl IsoPathTable {
 
 // Directory structure
 
+#[allow(dead_code)]
 const ISO_MAX_DIR_DEPTH: usize = 8;
 const ISO_DATE_LEN: usize = 7;
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum IsoFileType {
     HIDDEN = 0x1,    // Hidden file
     ISDIR = 0x2,     // Directory
