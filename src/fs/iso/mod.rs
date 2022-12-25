@@ -17,6 +17,7 @@ use async_trait::async_trait;
 pub struct IsoFS {}
 
 #[async_trait(?Send)]
+#[allow(unaligned_references)]
 impl FileSystem for IsoFS {
     async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
         // ISO is a read only file system
@@ -31,12 +32,13 @@ impl FileSystem for IsoFS {
             return None;
         }
 
-        let root: IsoDir = voldesc.root_dir;
-        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE] = read_block(root.data_blk.le).await;
+        let root: &IsoDir = &voldesc.root_dir;
+        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE as usize] = read_block(root.data_blk.le).await;
 
         let mut curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
 
         let path_s: String = String::from(path);
+        let path_split: Vec<&str> = path_s.split("/").collect();
         let path_it = path_s
             .split("/")
             .filter(|p| p != &"");
@@ -44,15 +46,14 @@ impl FileSystem for IsoFS {
         for path_component in path_it {
             let mut found = false;
             while curr_entry.idf_len != 0 {
-                serial_println!("{:?}", curr_entry.idf_len);
-                serial_println!("{:?}", alloc::str::from_utf8(curr_entry.get_idf()).unwrap());
 
                 // Found entry
                 if curr_entry.matches(path_component) {
-                    serial_println!("Found {}", path_component);
                     found = true;
-                    curr_entry_block = read_block(curr_entry.data_blk.le).await;
-                    curr_entry = unserialize(curr_entry_block.as_ptr());
+                    if path_component != path_split[path_split.len() - 1] {
+                        curr_entry_block = read_block(curr_entry.data_blk.le).await;
+                        curr_entry = unserialize(curr_entry_block.as_ptr());
+                    }
                     break;
                 }
 
@@ -64,9 +65,9 @@ impl FileSystem for IsoFS {
             }
         }
 
-        let fd = IsoFD::new();
+        let fd = IsoFD::new(curr_entry);
         FD_TABLE.lock().await.register_fd(fd.clone());
-        Some(fd.clone())
+        Some(fd)
     }
 }
 

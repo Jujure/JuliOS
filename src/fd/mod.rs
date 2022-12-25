@@ -47,5 +47,5 @@ impl FDTable {
 pub trait FileDescriptor {
     fn get_fd(&self) -> FDId;
     async fn write(&mut self, buf: &[u8], count: usize) -> isize;
-    async fn read(&mut self, buf: &[u8], count: usize) -> isize;
+    async fn read(&mut self, buf: &mut [u8], count: usize) -> isize;
 }

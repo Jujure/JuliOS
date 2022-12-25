@@ -1,6 +1,8 @@
+use crate::drivers::atapi::read_block;
 use crate::fd::{FDId, FDt, FileDescriptor};
 use crate::println;
-use crate::utils::mutex::AsyncMutex;
+
+use super::iso9660::{IsoDir, ISO_BLOCK_SIZE};
 
 use alloc::{boxed::Box, sync::Arc};
 use async_trait::async_trait;
@@ -8,11 +10,19 @@ use core::cell::RefCell;
 
 pub struct IsoFD {
     pub fd: FDId,
+    offset: u32,
+    lba: u32,
+    size: u32
 }
 
 impl IsoFD {
-    pub fn new() -> FDt {
-        Arc::new(RefCell::new(IsoFD { fd: FDId::new() }))
+    pub fn new(entry: &IsoDir) -> FDt {
+        Arc::new(RefCell::new(IsoFD {
+            fd: FDId::new(),
+            offset: 0,
+            lba: entry.data_blk.le,
+            size: entry.file_size.le,
+        }))
     }
 }
 
@@ -26,8 +36,26 @@ impl FileDescriptor for IsoFD {
         0
     }
 
-    async fn read(&mut self, buf: &[u8], count: usize) -> isize {
-        println!("Read from fd");
-        0
+    #[allow(unaligned_references)]
+    async fn read(&mut self, buf: &mut [u8], count: usize) -> isize {
+        let mut block_offset = self.offset / ISO_BLOCK_SIZE;
+        let mut content = read_block(self.lba + block_offset).await;
+        let mut read: isize = 0;
+        for _ in 0..count {
+            if self.offset >= self.size {
+                break;
+            }
+
+            buf[read as usize] = content[(self.offset % ISO_BLOCK_SIZE) as usize];
+            read += 1;
+            self.offset += 1;
+
+            if self.offset % ISO_BLOCK_SIZE == 0 {
+                block_offset += 1;
+                content = read_block(self.lba + block_offset).await;
+            }
+        }
+
+        read
     }
 }

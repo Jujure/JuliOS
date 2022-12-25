@@ -71,5 +71,9 @@ async fn get_file() {
         .open("///boot/grub//grub.cfg", syscalls::io::O_RDONLY)
         .await
         .unwrap();
-    fd.borrow_mut().read(&[], 0).await;
+    let mut buf: [u8; 100] = [0; 100];
+    let read = fd.borrow_mut().read(&mut buf, 100).await;
+
+    println!("{:?}", read);
+    println!("{:?}", alloc::str::from_utf8(&buf).unwrap());
 }

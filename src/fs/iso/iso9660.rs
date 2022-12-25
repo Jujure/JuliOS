@@ -1,4 +1,4 @@
-pub const ISO_BLOCK_SIZE: usize = 2048;
+pub const ISO_BLOCK_SIZE: u32 = 2048;
 
 // Twin values structs
 
