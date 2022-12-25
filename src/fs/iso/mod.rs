@@ -2,7 +2,7 @@ mod fd;
 pub mod iso9660;
 
 use crate::drivers::atapi::read_block;
-use crate::fd::{FDt, FD_TABLE};
+use crate::fd::{FDt};
 use crate::utils::unserialize;
 
 use super::FileSystem;
@@ -73,10 +73,6 @@ impl FileSystem for IsoFS {
         }
 
         Some(IsoFD::new(curr_entry).await)
-    }
-
-    async fn close(&mut self, fd: FDt) {
-        FD_TABLE.lock().await.unregister_fd(fd.clone());
     }
 }
 

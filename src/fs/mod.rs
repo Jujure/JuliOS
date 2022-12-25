@@ -17,7 +17,6 @@ lazy_static! {
 #[async_trait(?Send)]
 pub trait FileSystem {
     async fn open(&mut self, path: &str, flags: u32) -> Option<FDt>;
-    async fn close(&mut self, fd: FDt);
 }
 
 pub struct VirtualFS {
@@ -36,9 +35,5 @@ impl VirtualFS {
 impl FileSystem for VirtualFS {
     async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
         self.fs.borrow_mut().open(path, flags).await
-    }
-    
-    async fn close(&mut self, fd: FDt) {
-        self.fs.borrow_mut().close(fd).await
     }
 }

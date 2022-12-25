@@ -35,11 +35,11 @@ impl FDTable {
         }
     }
 
-    pub fn unregister_fd(&mut self, fd: FDt) {
-        self.table.remove(&fd.borrow().get_fd());
+    pub fn unregister_fd(&mut self, fd: &dyn FileDescriptor) {
+        self.table.remove(&fd.get_fd());
         println!(
             "Unregistered fd: {:?}",
-            fd.borrow().get_fd()
+            fd.get_fd()
         );
     }
 
@@ -57,4 +57,5 @@ pub trait FileDescriptor {
     fn get_fd(&self) -> FDId;
     async fn write(&mut self, buf: &[u8], count: usize) -> isize;
     async fn read(&mut self, buf: &mut [u8], count: usize) -> isize;
+    async fn close(&mut self);
 }

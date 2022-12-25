@@ -77,5 +77,5 @@ async fn get_file() {
     serial_println!("{:?}", read);
     serial_println!("{}", alloc::str::from_utf8(&buf).unwrap());
 
-    fs::VIRTUAL_FS.lock().await.close(fd).await;
+    fd.borrow_mut().close().await;
 }

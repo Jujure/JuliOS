@@ -60,4 +60,8 @@ impl FileDescriptor for IsoFD {
 
         read
     }
+
+    async fn close(&mut self) {
+        FD_TABLE.lock().await.unregister_fd(self);
+    }
 }
