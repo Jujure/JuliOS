@@ -42,12 +42,15 @@ impl FileSystem for IsoFS {
             .filter(|p| p != &"");
 
         for path_component in path_it {
+            let mut found = false;
             while curr_entry.idf_len != 0 {
                 serial_println!("{:?}", curr_entry.idf_len);
                 serial_println!("{:?}", alloc::str::from_utf8(curr_entry.get_idf()).unwrap());
 
+                // Found entry
                 if curr_entry.matches(path_component) {
                     serial_println!("Found {}", path_component);
+                    found = true;
                     curr_entry_block = read_block(curr_entry.data_blk.le).await;
                     curr_entry = unserialize(curr_entry_block.as_ptr());
                     break;
@@ -55,6 +58,9 @@ impl FileSystem for IsoFS {
 
                 // Next entry
                 curr_entry = curr_entry.next_entry();
+            }
+            if !found {
+                return None;
             }
         }
 
