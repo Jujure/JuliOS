@@ -58,4 +58,5 @@ pub trait FileDescriptor {
     async fn write(&mut self, buf: &[u8], count: usize) -> isize;
     async fn read(&mut self, buf: &mut [u8], count: usize) -> isize;
     async fn close(&mut self);
+    async fn lseek(&mut self, offset: i32, whence: u32) -> i32;
 }

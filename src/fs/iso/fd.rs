@@ -64,4 +64,15 @@ impl FileDescriptor for IsoFD {
     async fn close(&mut self) {
         FD_TABLE.lock().await.unregister_fd(self);
     }
+
+    async fn lseek(&mut self, offset: i32, whence: u32) -> i32 {
+        use crate::syscalls::io::*;
+        match whence {
+            w if w == SEEK_SET => self.offset = offset as u32,
+            w if w == SEEK_CUR => self.offset = (self.offset as i32 + offset) as u32,
+            w if w == SEEK_END => self.offset = (self.size as i32 + offset) as u32,
+            _ => {}
+        };
+        self.offset as i32
+    }
 }

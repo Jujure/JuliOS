@@ -77,5 +77,10 @@ async fn get_file() {
     serial_println!("{:?}", read);
     serial_println!("{}", alloc::str::from_utf8(&buf).unwrap());
 
+    fd.borrow_mut().lseek(10, syscalls::io::SEEK_SET).await;
+
+    fd.borrow_mut().read(&mut buf, 100).await;
+    serial_println!("{}", alloc::str::from_utf8(&buf).unwrap());
+
     fd.borrow_mut().close().await;
 }
