@@ -46,7 +46,7 @@ impl FileSystem for IsoFS {
                 serial_println!("{:?}", curr_entry.idf_len);
                 serial_println!("{:?}", alloc::str::from_utf8(curr_entry.get_idf()).unwrap());
 
-                if curr_entry.get_idf() == path_component.as_bytes() {
+                if curr_entry.matches(path_component) {
                     serial_println!("Found {}", path_component);
                     curr_entry_block = read_block(curr_entry.data_blk.le).await;
                     curr_entry = unserialize(curr_entry_block.as_ptr());
@@ -54,7 +54,7 @@ impl FileSystem for IsoFS {
                 }
 
                 // Next entry
-                curr_entry = next_entry(curr_entry);
+                curr_entry = curr_entry.next_entry();
             }
         }
 
@@ -64,9 +64,6 @@ impl FileSystem for IsoFS {
     }
 }
 
-pub fn next_entry(entry: &IsoDir) -> &IsoDir {
-    crate::utils::ref_raw_offset(entry, entry.dir_size as isize)
-}
 
 pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
     let desc_block = read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK).await;

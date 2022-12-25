@@ -75,6 +75,14 @@ impl IsoDir {
     pub fn get_idf(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.idf.as_ptr(), self.idf_len as usize) }
     }
+
+    pub fn next_entry(&self) -> &IsoDir {
+        crate::utils::ref_raw_offset(self, self.dir_size as isize)
+    }
+
+    pub fn matches(&self, path: &str) -> bool {
+        self.get_idf() == path.as_bytes()
+    }
 }
 
 // Primary volume descriptor structure
