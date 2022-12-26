@@ -168,6 +168,7 @@ dependencies = [
  "pc-keyboard",
  "pic8259",
  "postcard",
+ "prefix_tree_map",
  "serde",
  "spin 0.5.2",
  "volatile 0.2.7",
@@ -253,6 +254,12 @@ dependencies = [
  "heapless",
  "serde",
 ]
+
+[[package]]
+name = "prefix_tree_map"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff18d4689013a9426f91537e79fcc8ccdb1b8f595a42b510fcbb7687e96f71da"
 
 [[package]]
 name = "proc-macro2"
