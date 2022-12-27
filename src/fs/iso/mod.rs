@@ -2,7 +2,7 @@ mod fd;
 pub mod iso9660;
 
 use crate::drivers::atapi::read_block;
-use crate::fd::{FDt};
+use crate::fd::FDt;
 use crate::utils::unserialize;
 
 use super::FileSystem;
@@ -31,20 +31,18 @@ impl FileSystem for IsoFS {
         }
 
         let root: &IsoDir = &voldesc.root_dir;
-        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE as usize] = read_block(root.data_blk.le).await;
+        let mut curr_entry_block: [u8; iso9660::ISO_BLOCK_SIZE as usize] =
+            read_block(root.data_blk.le).await;
 
         let mut curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
 
         let path_s: String = String::from(path);
         let path_split: Vec<&str> = path_s.split("/").collect();
-        let path_it = path_s
-            .split("/")
-            .filter(|p| p != &"");
+        let path_it = path_s.split("/").filter(|p| p != &"");
 
         for path_component in path_it {
             let mut found = false;
             while curr_entry.idf_len != 0 {
-
                 // Found entry
                 if curr_entry.matches(path_component) {
                     found = true;
@@ -75,7 +73,6 @@ impl FileSystem for IsoFS {
         Some(IsoFD::new(curr_entry).await)
     }
 }
-
 
 pub async fn get_prim_vol_desc() -> IsoPrimVolDesc {
     let desc_block = read_block(iso9660::ISO_PRIM_VOLDESC_BLOCK).await;

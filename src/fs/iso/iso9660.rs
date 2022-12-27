@@ -77,7 +77,7 @@ impl IsoDir {
     #[allow(unaligned_references)]
     pub fn get_idf(&self) -> &[u8] {
         let mut len: usize = self.idf_len as usize;
-        unsafe { 
+        unsafe {
             let mut idf = core::slice::from_raw_parts(self.idf.as_ptr(), len as usize);
             if len > 2 && idf[len - 2] == b';' && idf[len - 1] == b'1' {
                 len -= 2;

@@ -11,7 +11,7 @@ pub struct IsoFD {
     pub fd: FDId,
     offset: u32,
     lba: u32,
-    size: u32
+    size: u32,
 }
 
 impl IsoFD {

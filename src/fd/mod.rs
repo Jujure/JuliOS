@@ -37,10 +37,7 @@ impl FDTable {
 
     pub fn unregister_fd(&mut self, fd: &dyn FileDescriptor) {
         self.table.remove(&fd.get_fd());
-        println!(
-            "Unregistered fd: {:?}",
-            fd.get_fd()
-        );
+        println!("Unregistered fd: {:?}", fd.get_fd());
     }
 
     pub fn register_fd(&mut self, fd: FDt) {
