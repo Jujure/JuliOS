@@ -92,7 +92,7 @@ impl IsoDir {
     }
 
     pub fn matches(&self, path: &str) -> bool {
-        self.get_idf() == path.as_bytes()
+        self.get_idf().to_ascii_uppercase() == path.as_bytes()
     }
 }
 

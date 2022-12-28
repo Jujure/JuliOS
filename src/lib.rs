@@ -68,7 +68,7 @@ async fn get_file() {
     let fd = fs::VIRTUAL_FS
         .lock()
         .await
-        .open("///boot/grub//grub.cfg", syscalls::io::O_RDONLY)
+        .open("/mnt/iso//boot/grub//grub.cfg", syscalls::io::O_RDONLY)
         .await
         .unwrap();
     let mut buf: [u8; 100] = [0; 100];

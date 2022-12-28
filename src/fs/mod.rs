@@ -55,6 +55,7 @@ impl VirtualFS {
 impl FileSystem for VirtualFS {
     async fn open(&mut self, path: &str, flags: u32) -> Option<FDt> {
         if let Some(map) = &self.map {
+            let mut mnt_relative_path: String = String::from("");
             let path_s: String = String::from(path);
             let mut path_split: Vec<String> = path_s
                 .split("/")
@@ -64,10 +65,11 @@ impl FileSystem for VirtualFS {
             loop {
                 if let Some(fs) = map.find_exact(&path_split) {
                     // TODO, remove path prefix of the mount point
-                    return fs.borrow_mut().open(path, flags).await;
+                    return fs.borrow_mut().open(mnt_relative_path.as_str(), flags).await;
                 }
                 else {
-                    path_split.truncate(path_split.len() - 1);
+                    let component = path_split.remove(path_split.len() - 1);
+                    mnt_relative_path = String::from("/") + component.as_str() + mnt_relative_path.as_str();
                 }
             }
         } else {

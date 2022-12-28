@@ -1,6 +1,8 @@
 mod fd;
 pub mod iso9660;
 
+use crate::serial_println;
+
 use crate::drivers::atapi::read_block;
 use crate::fd::FDt;
 use crate::utils::unserialize;
@@ -37,18 +39,22 @@ impl FileSystem for IsoFS {
         let mut curr_entry: &IsoDir = unserialize(curr_entry_block.as_ptr());
 
         let path_s: String = String::from(path);
-        let path_split: Vec<&str> = path_s.split("/").collect();
-        let path_it = path_s.split("/").filter(|p| p != &"");
+        let path_split: Vec<String> = path_s
+            .split("/")
+            .filter(|p| p != &"")
+            .map(|s| s.to_uppercase())
+            .collect();
+        let path_it = path_split.iter();
 
         for path_component in path_it {
             let mut found = false;
             while curr_entry.idf_len != 0 {
                 // Found entry
-                if curr_entry.matches(path_component) {
+                if curr_entry.matches(path_component.as_str()) {
                     found = true;
 
                     // Not the last component, go 1 directory deeper
-                    if path_component != path_split[path_split.len() - 1] {
+                    if path_component.as_str() != path_split[path_split.len() - 1] {
                         // Not a directory
                         if curr_entry.file_type != iso9660::IsoFileType::ISDIR {
                             return None;
