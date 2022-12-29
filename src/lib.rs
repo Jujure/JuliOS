@@ -8,6 +8,7 @@ mod fd;
 mod fs;
 mod interrupts;
 mod memory;
+mod proc;
 mod syscalls;
 mod task;
 mod utils;
