@@ -80,6 +80,10 @@ impl<T> AsyncMutex<T> {
         }
     }
 
+    pub fn force_unlock(&self) {
+        self.lock.drop();
+    }
+
     pub async fn lock(&self) -> AsyncMutexGuard<'_, T> {
         self.lock.clone().await;
         AsyncMutexGuard { mutex: self }

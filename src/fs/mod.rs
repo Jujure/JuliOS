@@ -65,11 +65,14 @@ impl FileSystem for VirtualFS {
             loop {
                 if let Some(fs) = map.find_exact(&path_split) {
                     // TODO, remove path prefix of the mount point
-                    return fs.borrow_mut().open(mnt_relative_path.as_str(), flags).await;
-                }
-                else {
+                    return fs
+                        .borrow_mut()
+                        .open(mnt_relative_path.as_str(), flags)
+                        .await;
+                } else {
                     let component = path_split.remove(path_split.len() - 1);
-                    mnt_relative_path = String::from("/") + component.as_str() + mnt_relative_path.as_str();
+                    mnt_relative_path =
+                        String::from("/") + component.as_str() + mnt_relative_path.as_str();
                 }
             }
         } else {

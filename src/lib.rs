@@ -23,6 +23,9 @@ use drivers::vga::{self, Color, ColorCode};
 use multiboot2::BootInformation;
 use task::{executor::Executor, keyboard, Task};
 
+use alloc::sync::Arc;
+use core::cell::RefCell;
+
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
     panic!("Allocation error: {:?}", layout)
@@ -48,7 +51,6 @@ pub fn init(boot_info: &BootInformation) {
     memory::gdt::init_gdt();
     interrupts::init_idt();
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
-    println!("Init kernel main thread: {:?}", proc::thread::KERNEL_THREAD.try_lock().unwrap().id);
 }
 
 #[no_mangle]
@@ -86,6 +88,15 @@ async fn get_file() {
 
     fd.borrow_mut().close().await;
 
-    let mut thread = proc::thread::Thread::new();
-    thread.start(proc::thread::exit as u64).await;
+    let thread = Arc::new(RefCell::new(proc::thread::Thread::new(
+        proc::thread::exit as u64,
+    )));
+    proc::scheduler::SCHEDULER
+        .lock()
+        .await
+        .register(thread.clone());
+
+    unsafe {
+        (&mut*thread.as_ptr()).run();
+    }
 }
