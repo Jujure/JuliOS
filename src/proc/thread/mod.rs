@@ -27,14 +27,18 @@ impl ThreadId {
 
 pub fn exit() {
     println!("Exiting thread");
-    let mut scheduler = SCHEDULER.try_lock().unwrap();
-    let mut thread = scheduler
-        .threads
-        .get_mut(&ThreadId(0))
-        .unwrap()
-        .borrow_mut();
-    SCHEDULER.force_unlock();
-    thread.run();
+    let thread: *mut Thread;
+    {
+        let mut scheduler = SCHEDULER.try_lock().unwrap();
+        thread = scheduler
+            .get_thread(ThreadId(0))
+            .unwrap()
+            .as_ptr();
+    } // Drop scheduler mutex guard
+
+    unsafe {
+        (&mut* thread).run();
+    }
 }
 
 pub struct Thread {
@@ -51,7 +55,7 @@ impl Thread {
                 id: ThreadId::new(),
                 entry_point: entry_point,
                 started: false,
-                rsp: alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64 + STACK_SIZE as u64 - 0x80,
+                rsp: alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64 + STACK_SIZE as u64,
             }
         }
     }
@@ -69,7 +73,7 @@ impl Thread {
             );
 
             let mut scheduler = SCHEDULER.try_lock().unwrap();
-            let current_thread = scheduler.threads.get_mut(&*current_thread_guard).unwrap();
+            let current_thread = scheduler.get_thread(*current_thread_guard).unwrap();
             current_thread.borrow_mut().rsp = current_rsp;
 
             *current_thread_guard = self.id; // change running thread
@@ -109,9 +113,9 @@ impl Thread {
                     "push rsi",
                     "push rdi",
 
-                    "push {rsp}",
+                    "push {rsp}",    // Set stack pointer to the new thread
                     "pop rsp",
-                    "jmp {rip}",
+                    "jmp {rip}",     // Jump to thread routine
                     rsp = in(reg) self.rsp,
                     rip = in(reg) self.entry_point,
                 );

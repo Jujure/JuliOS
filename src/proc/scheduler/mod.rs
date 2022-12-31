@@ -56,4 +56,12 @@ impl Scheduler {
             .push(thread_id)
             .expect("Thread queue full");
     }
+
+    pub fn get_thread(&mut self, id: ThreadId) -> Option<Threadt> {
+        if let Some(thread) = self.threads.get_mut(&id) {
+            Some(thread.clone())
+        } else {
+            None
+        }
+    }
 }
