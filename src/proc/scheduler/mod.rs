@@ -4,7 +4,13 @@ use super::thread::{Thread, ThreadId};
 
 use alloc::{collections::BTreeMap, sync::Arc};
 use core::cell::RefCell;
+use core::{
+    pin::Pin,
+    task::{Context, Poll},
+};
 use crossbeam_queue::ArrayQueue;
+use futures_util::stream::{Stream, StreamExt};
+use futures_util::task::AtomicWaker;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -13,16 +19,50 @@ lazy_static! {
 
 pub type Threadt = Arc<RefCell<Thread>>;
 
+struct ThreadStream {
+    ids: ArrayQueue<ThreadId>,
+    waker: AtomicWaker
+}
+
+impl ThreadStream {
+    pub fn new() -> Self {
+        ThreadStream {
+            ids: ArrayQueue::new(100),
+            waker: AtomicWaker::new(),
+        }
+    }
+}
+
+impl Stream for ThreadStream {
+    type Item = ThreadId;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+        if let Ok(id) = self.ids.pop() {
+            return Poll::Ready(Some(id));
+        }
+
+        self.waker.register(&cx.waker());
+
+        match self.ids.pop() {
+            Ok(id) => {
+                self.waker.take();
+                Poll::Ready(Some(id))
+            }
+            Err(crossbeam_queue::PopError) => Poll::Pending,
+        }
+    }
+}
+
 pub struct Scheduler {
     pub threads: BTreeMap<ThreadId, Threadt>,
-    thread_queue: Arc<ArrayQueue<ThreadId>>,
+    thread_queue: ThreadStream,
 }
 
 impl Scheduler {
     pub fn new() -> Self {
         let mut res = Scheduler {
             threads: BTreeMap::new(),
-            thread_queue: Arc::new(ArrayQueue::new(100)),
+            thread_queue: ThreadStream::new(),
         };
         let k_thread: Thread = Thread {
             id: ThreadId(0),
@@ -34,16 +74,13 @@ impl Scheduler {
         res
     }
 
-    pub fn schedule(&mut self) -> Option<Threadt> {
-        if let Ok(thread_id) = self.thread_queue.pop() {
-            self.thread_queue.push(thread_id);
-            let thread = match self.threads.get_mut(&thread_id) {
-                Some(thread) => thread,
-                None => return None,
-            };
-            Some(thread.clone())
-        } else {
-            None
+
+    pub async fn run(&mut self) {
+        while let Some(id) = self.thread_queue.next().await {
+            let thread = self.get_thread(id).unwrap();
+            unsafe {
+                (&mut*thread.as_ptr()).run();
+            }
         }
     }
 
@@ -53,8 +90,10 @@ impl Scheduler {
             panic!("Duplicate thread ID")
         }
         self.thread_queue
+            .ids
             .push(thread_id)
             .expect("Thread queue full");
+        self.thread_queue.waker.wake();
     }
 
     pub fn get_thread(&mut self, id: ThreadId) -> Option<Threadt> {
@@ -64,4 +103,10 @@ impl Scheduler {
             None
         }
     }
+}
+
+pub async fn scheduler_run() {
+    let mut scheduler = SCHEDULER.lock().await;
+    SCHEDULER.force_unlock();
+    scheduler.run().await;
 }

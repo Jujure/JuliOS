@@ -27,18 +27,23 @@ impl ThreadId {
 
 pub fn exit() {
     println!("Exiting thread");
-    let thread: *mut Thread;
+    let k_thread: *mut Thread;
     {
         let mut scheduler = SCHEDULER.try_lock().unwrap();
-        thread = scheduler
+        k_thread = scheduler
             .get_thread(ThreadId(0))
             .unwrap()
             .as_ptr();
     } // Drop scheduler mutex guard
 
     unsafe {
-        (&mut* thread).run();
+        (&mut* k_thread).run();
     }
+}
+
+pub fn routine() {
+    println!("Routine executed");
+    exit();
 }
 
 pub struct Thread {
@@ -73,11 +78,12 @@ impl Thread {
             );
 
             let mut scheduler = SCHEDULER.try_lock().unwrap();
+            // TODO: check if the thread still exists
             let current_thread = scheduler.get_thread(*current_thread_guard).unwrap();
             current_thread.borrow_mut().rsp = current_rsp;
 
             *current_thread_guard = self.id; // change running thread
-        } // The scheduler and running thread guards is dropped here
+        } // The scheduler and running thread guards are dropped here
 
         unsafe {
             if self.started {

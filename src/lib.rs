@@ -65,6 +65,7 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     executor.spawn(Task::new(drivers::atapi::init()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.spawn(Task::new(get_file()));
+    executor.spawn(Task::new(proc::scheduler::scheduler_run()));
     executor.run();
 }
 
@@ -89,14 +90,10 @@ async fn get_file() {
     fd.borrow_mut().close().await;
 
     let thread = Arc::new(RefCell::new(proc::thread::Thread::new(
-        proc::thread::exit as u64,
+        proc::thread::routine as u64,
     )));
     proc::scheduler::SCHEDULER
         .lock()
         .await
         .register(thread.clone());
-
-    unsafe {
-        (&mut*thread.as_ptr()).run();
-    }
 }
