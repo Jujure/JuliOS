@@ -53,23 +53,28 @@ impl Thread {
         unsafe {
             Thread {
                 id: ThreadId::new(),
-                rsp: alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64,
+                rsp: alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64 + STACK_SIZE as u64 - 0x80,
             }
         }
     }
 
     pub async fn start(&mut self, rip: u64) {
         unsafe {
+            *RUNNING_THREAD.lock().await = self.id;
             asm!(
-                "pusha",       // Save current thread regs
+                "push rax",       // Save current thread regs
+                "push rbx",
+                "push rcx",
+                "push rdx",
+                "push rbp",
+                "push rsi",
+                "push rdi",
+
                 "push rsp",    // Recover current rsp
                 "pop {out}",
-                out = out(reg) self.rsp, // Save current rsp
+                out = out(reg) KERNEL_THREAD.lock().await.rsp, // Save current rsp
             );
-        }
 
-        *RUNNING_THREAD.lock().await = self.id;
-        unsafe {
             asm!(
                 "push {rsp}",
                 "pop rsp",
@@ -83,10 +88,17 @@ impl Thread {
     pub async fn run(&mut self) {
         unsafe {
             asm!(
-                "pusha",       // Save current thread regs
+                "push rax",       // Save current thread regs
+                "push rbx",
+                "push rcx",
+                "push rdx",
+                "push rbp",
+                "push rsi",
+                "push rdi",
+
                 "push rsp",    // Recover current rsp
                 "pop {out}",
-                out = out(reg) self.rsp, // Save current rsp
+                out = out(reg) KERNEL_THREAD.lock().await.rsp, // Save current rsp
             );
 
             *RUNNING_THREAD.lock().await = self.id; // change running thread
@@ -94,7 +106,14 @@ impl Thread {
             asm!(
                 "push {rsp}", // Set stack pointer to the new thread
                 "pop rsp",
-                "popa",       // Restore new thread regs
+
+                "pop rdi",       // Restore new thread regs
+                "pop rsi",
+                "pop rbp",
+                "pop rdx",
+                "pop rcx",
+                "pop rbx",
+                "pop rax",
                 rsp = in(reg) self.rsp,
             );
         }
