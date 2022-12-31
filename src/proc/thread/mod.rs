@@ -34,6 +34,7 @@ pub fn exit() {
             .get_thread(ThreadId(0))
             .unwrap()
             .as_ptr();
+            scheduler.exit(*RUNNING_THREAD.try_lock().unwrap());
     } // Drop scheduler mutex guard
 
     unsafe {
@@ -51,17 +52,26 @@ pub struct Thread {
     pub entry_point: u64,
     pub started: bool,
     pub rsp: u64,
+    pub base_stack: u64
 }
 
 impl Thread {
     pub fn new(entry_point: u64) -> Self {
         unsafe {
+            let stack_bottom = alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64;
             Thread {
                 id: ThreadId::new(),
                 entry_point: entry_point,
                 started: false,
-                rsp: alloc(Layout::new::<[u8; STACK_SIZE]>()) as u64 + STACK_SIZE as u64,
+                rsp: stack_bottom + STACK_SIZE as u64,
+                base_stack: stack_bottom,
             }
+        }
+    }
+
+    pub fn exit(&self) {
+        unsafe {
+            dealloc(self.base_stack as *mut u8, Layout::new::<[u8; STACK_SIZE]>());
         }
     }
 
@@ -69,18 +79,35 @@ impl Thread {
         println!("Running thread {:?}", self.id);
         unsafe {
             let mut current_thread_guard = RUNNING_THREAD.try_lock().unwrap();
-            let current_rsp: u64;
-            asm!(
-                "push rsp",    // Recover current rsp
-                "pop {out}",
-                "sub {out}, 56", // Offset to saved registers
-                out = out(reg) current_rsp, // Save thread rsp
-            );
 
             let mut scheduler = SCHEDULER.try_lock().unwrap();
-            // TODO: check if the thread still exists
-            let current_thread = scheduler.get_thread(*current_thread_guard).unwrap();
-            current_thread.borrow_mut().rsp = current_rsp;
+            if let Some(current_thread) = scheduler.get_thread(*current_thread_guard) {
+                let current_rsp: u64;
+                asm!(
+                    "push rsp",    // Recover current rsp
+                    "pop {out}",
+                    "sub {out}, 56", // Offset to saved registers
+                    out = out(reg) current_rsp, // Save thread rsp
+                );
+                current_thread.borrow_mut().rsp = current_rsp;
+            }
+            else { // Thread does not exists anymore
+                *current_thread_guard = self.id; // change running thread
+                asm!( // Just switch to new thead without saving registers
+                    "push {rsp}", // Set stack pointer to the new thread
+                    "pop rsp",
+
+                    "pop rdi",       // Restore new thread regs
+                    "pop rsi",
+                    "pop rbp",
+                    "pop rdx",
+                    "pop rcx",
+                    "pop rbx",
+                    "pop rax",
+                    rsp = in(reg) self.rsp,
+                );
+                return;
+            }
 
             *current_thread_guard = self.id; // change running thread
         } // The scheduler and running thread guards are dropped here

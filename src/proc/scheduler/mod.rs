@@ -31,6 +31,13 @@ impl ThreadStream {
             waker: AtomicWaker::new(),
         }
     }
+
+    pub fn register(&mut self, id: ThreadId) {
+        self.ids
+            .push(id)
+            .expect("Thread queue full");
+        self.waker.wake();
+    }
 }
 
 impl Stream for ThreadStream {
@@ -69,6 +76,7 @@ impl Scheduler {
             entry_point: 0,
             started: true,
             rsp: 0,
+            base_stack: 0,
         };
         res.register(Arc::new(RefCell::new(k_thread)));
         res
@@ -77,9 +85,11 @@ impl Scheduler {
 
     pub async fn run(&mut self) {
         while let Some(id) = self.thread_queue.next().await {
-            let thread = self.get_thread(id).unwrap();
-            unsafe {
-                (&mut*thread.as_ptr()).run();
+            if let Some(thread) = self.get_thread(id) { // Thread still exists
+                unsafe {
+                    (&mut*thread.as_ptr()).run();
+                }
+                self.thread_queue.register(id);
             }
         }
     }
@@ -89,11 +99,13 @@ impl Scheduler {
         if self.threads.insert(thread_id, thread).is_some() {
             panic!("Duplicate thread ID")
         }
-        self.thread_queue
-            .ids
-            .push(thread_id)
-            .expect("Thread queue full");
-        self.thread_queue.waker.wake();
+        if thread_id != ThreadId(0) {
+            self.thread_queue.register(thread_id);
+        }
+    }
+
+    pub fn exit(&mut self, id: ThreadId) {
+        self.threads.remove(&id).unwrap().borrow().exit();
     }
 
     pub fn get_thread(&mut self, id: ThreadId) -> Option<Threadt> {
