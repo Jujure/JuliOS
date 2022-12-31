@@ -73,7 +73,7 @@ impl<T> AsyncMutex<T> {
     }
 
     pub fn try_lock(&self) -> Option<AsyncMutexGuard<T>> {
-        if self.lock.try_lock() {
+        if !self.lock.try_lock() {
             Some(AsyncMutexGuard { mutex: self })
         } else {
             None

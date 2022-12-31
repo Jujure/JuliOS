@@ -48,6 +48,7 @@ pub fn init(boot_info: &BootInformation) {
     memory::gdt::init_gdt();
     interrupts::init_idt();
     vga::change_color(ColorCode::new(Color::LightGreen, Color::Black));
+    println!("Init kernel main thread: {:?}", proc::thread::KERNEL_THREAD.try_lock().unwrap().id);
 }
 
 #[no_mangle]
@@ -84,4 +85,7 @@ async fn get_file() {
     serial_println!("{}", alloc::str::from_utf8(&buf).unwrap());
 
     fd.borrow_mut().close().await;
+
+    let mut thread = proc::thread::Thread::new();
+    thread.start(proc::thread::exit as u64).await;
 }
