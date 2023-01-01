@@ -19,6 +19,8 @@ lazy_static! {
 
 pub type Threadt = Arc<RefCell<Thread>>;
 
+pub const K_THREAD_ID: ThreadId = ThreadId(0); // Kernel main thread identifier
+
 struct ThreadStream {
     ids: ArrayQueue<ThreadId>,
     waker: AtomicWaker
@@ -72,7 +74,7 @@ impl Scheduler {
             thread_queue: ThreadStream::new(),
         };
         let k_thread: Thread = Thread {
-            id: ThreadId(0),
+            id: K_THREAD_ID,
             entry_point: 0,
             started: true,
             rsp: 0,
@@ -99,7 +101,7 @@ impl Scheduler {
         if self.threads.insert(thread_id, thread).is_some() {
             panic!("Duplicate thread ID")
         }
-        if thread_id != ThreadId(0) {
+        if thread_id != K_THREAD_ID {
             self.thread_queue.register(thread_id);
         }
     }

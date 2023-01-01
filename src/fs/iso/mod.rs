@@ -1,8 +1,6 @@
 mod fd;
 pub mod iso9660;
 
-use crate::serial_println;
-
 use crate::drivers::atapi::read_block;
 use crate::fd::FDt;
 use crate::utils::unserialize;

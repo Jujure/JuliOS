@@ -1,7 +1,7 @@
 use crate::println;
 use crate::utils::mutex::AsyncMutex;
 
-use super::scheduler::SCHEDULER;
+use super::scheduler::{SCHEDULER, K_THREAD_ID};
 
 use core::arch::asm;
 use core::sync::atomic::{AtomicU64, Ordering};
@@ -27,14 +27,22 @@ impl ThreadId {
 
 pub fn exit() {
     println!("Exiting thread");
+    {
+        let mut scheduler = SCHEDULER.try_lock().unwrap();
+        scheduler.exit(*RUNNING_THREAD.try_lock().unwrap());
+    } // Drop scheduler mutex guard
+
+    resume_k_thread();
+}
+
+pub fn resume_k_thread() {
     let k_thread: *mut Thread;
     {
         let mut scheduler = SCHEDULER.try_lock().unwrap();
         k_thread = scheduler
-            .get_thread(ThreadId(0))
+            .get_thread(K_THREAD_ID)
             .unwrap()
             .as_ptr();
-            scheduler.exit(*RUNNING_THREAD.try_lock().unwrap());
     } // Drop scheduler mutex guard
 
     unsafe {
