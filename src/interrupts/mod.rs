@@ -2,6 +2,8 @@ use crate::drivers::vga::{self, Color, ColorCode};
 use crate::hlt_loop;
 use crate::memory::gdt;
 use crate::println;
+
+use core::arch::asm;
 use lazy_static::lazy_static;
 use pic::{
     disk1_interrupt_handler, disk2_interrupt_handler, init_pic, keyboard_interrupt_handler,
@@ -11,6 +13,8 @@ use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub mod pic;
+
+const SYSCALL_32_INTERRUPT_NUMBER: usize = 0x80;
 
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
@@ -26,6 +30,7 @@ lazy_static! {
         idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
         idt[InterruptIndex::HardDisk1.as_usize()].set_handler_fn(disk1_interrupt_handler);
         idt[InterruptIndex::HardDisk2.as_usize()].set_handler_fn(disk2_interrupt_handler);
+        idt[SYSCALL_32_INTERRUPT_NUMBER].set_handler_fn(syscall_handler_32);
         idt
     };
 }
@@ -45,6 +50,10 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     vga::change_color(ColorCode::new(Color::Pink, Color::Black));
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
     vga::change_color(color);
+}
+
+extern "x86-interrupt" fn syscall_handler_32(_stack_frame: InterruptStackFrame) {
+    println!("Received syscall");
 }
 
 extern "x86-interrupt" fn page_fault_handler(
