@@ -1,7 +1,15 @@
+use crate::utils::AsyncMutex;
+
 use super::{Task, TaskId};
+
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use core::task::{Context, Poll, Waker};
 use crossbeam_queue::ArrayQueue;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref EXECUTOR: AsyncMutex<Executor> = AsyncMutex::new(Executor::new());
+}
 
 pub struct Executor {
     tasks: BTreeMap<TaskId, Task>,

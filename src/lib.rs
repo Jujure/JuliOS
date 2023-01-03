@@ -21,7 +21,7 @@ use crate::fs::FileSystem;
 use core::panic::PanicInfo;
 use drivers::vga::{self, Color, ColorCode};
 use multiboot2::BootInformation;
-use task::{executor::Executor, keyboard, Task};
+use task::{executor::EXECUTOR, keyboard, Task};
 
 use alloc::sync::Arc;
 use core::cell::RefCell;
@@ -61,11 +61,14 @@ pub extern "C" fn julios_main(multiboot_info_addr: usize) -> ! {
     println!("***JuliOS V0.1.0***");
     serial_println!("Hello serial");
 
-    let mut executor = Executor::new();
+    let mut executor = EXECUTOR.try_lock().unwrap();
     executor.spawn(Task::new(drivers::atapi::init()));
     executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.spawn(Task::new(get_file()));
     executor.spawn(Task::new(proc::scheduler::scheduler_run()));
+
+    EXECUTOR.force_unlock(); // Ouioui t'inquietes
+
     executor.run();
 }
 
