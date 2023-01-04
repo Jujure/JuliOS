@@ -1,4 +1,6 @@
+use crate::println;
 use crate::proc::thread::{resume_k_thread, RUNNING_THREAD};
+use crate::proc::scheduler::SCHEDULER;
 use crate::task::executor::EXECUTOR;
 use crate::task::Task;
 
@@ -19,25 +21,47 @@ pub struct SyscallContext {
     thread_id: crate::proc::thread::ThreadId,
 }
 
-pub fn syscall_dispatcher(context: SyscallContextT) -> Task {
-    match context.borrow().id {
-        EXIT_ID => Task::new(proc::exit(context.clone())),
-        _ => Task::new(bad_syscall()),
+impl SyscallContext {
+    pub async fn run(&mut self) {
+        println!("Running async syscall runner");
+        self.dispatch().await;
+        println!("Syscall end, unblocking thread");
+        SCHEDULER.lock().await.unblock(self.thread_id);
+    }
+
+    pub async fn dispatch(&mut self) {
+        match self.id {
+            EXIT_ID => proc::exit(self).await,
+            _ => bad_syscall().await,
+        }
     }
 }
 
+
+async fn syscall_runner(context: SyscallContextT) {
+    context.borrow_mut().run().await;
+}
+
 pub fn syscall_routine(syscall_id: SyscallId) -> u64 {
+    println!("Running syscall");
     let context: SyscallContextT = Arc::new(RefCell::new(SyscallContext {
         id: syscall_id,
         res: 0,
         thread_id: *RUNNING_THREAD.try_lock().unwrap(),
     }));
     
+    println!("Spawning async syscall runner");
     EXECUTOR
         .try_lock()
         .unwrap()
-        .spawn(syscall_dispatcher(context.clone()));
+        .spawn(Task::new(syscall_runner(context.clone())));
 
+    println!("Blocking thread");
+    SCHEDULER
+        .try_lock()
+        .unwrap()
+        .block(context.borrow().thread_id);
+    println!("Returning to scheduler");
     resume_k_thread();
 
     let res = context.borrow().res;

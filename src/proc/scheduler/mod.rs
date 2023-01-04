@@ -1,3 +1,4 @@
+use crate::println;
 use crate::utils::mutex::AsyncMutex;
 
 use super::thread::{Thread, ThreadId};
@@ -77,6 +78,7 @@ impl Scheduler {
             started: true,
             rsp: 0,
             base_stack: 0,
+            is_blocked: false,
         };
         res.register(Arc::new(RefCell::new(k_thread)));
         res
@@ -86,10 +88,19 @@ impl Scheduler {
         while let Some(id) = self.thread_queue.next().await {
             if let Some(thread) = self.get_thread(id) {
                 // Thread still exists
-                unsafe {
-                    (&mut *thread.as_ptr()).run();
+                let blocked: bool;
+                {
+                    blocked = thread.borrow().is_blocked;
+                } // Drop thread borrow
+                if !blocked {
+                    unsafe {
+                        (&mut *thread.as_ptr()).run();
+                    }
+
+                    if !thread.borrow().is_blocked {
+                        self.thread_queue.register(id);
+                    }
                 }
-                self.thread_queue.register(id);
             }
         }
     }
@@ -101,6 +112,21 @@ impl Scheduler {
         }
         if thread_id != K_THREAD_ID {
             self.thread_queue.register(thread_id);
+        }
+    }
+
+    pub fn block(&mut self, id: ThreadId) {
+        if let Some(thread) = self.get_thread(id) {
+            thread.borrow_mut().is_blocked = true;
+            println!("Blocked thread {:?}", id);
+        }
+    }
+
+    pub fn unblock(&mut self, id: ThreadId) {
+        if let Some(thread) = self.get_thread(id) {
+            thread.borrow_mut().is_blocked = false;
+            self.thread_queue.register(id);
+            println!("Unblocked thread {:?}", id);
         }
     }
 

@@ -25,10 +25,10 @@ impl ThreadId {
     }
 }
 
-pub async fn resume_k_thread() {
+pub fn resume_k_thread() {
     let k_thread: *mut Thread;
     {
-        let mut scheduler = SCHEDULER.lock().await;
+        let mut scheduler = SCHEDULER.try_lock().unwrap();
         k_thread = scheduler.get_thread(K_THREAD_ID).unwrap().as_ptr();
     } // Drop scheduler mutex guard
 
@@ -40,6 +40,7 @@ pub async fn resume_k_thread() {
 pub fn routine() {
     println!("Routine executed");
     crate::syscalls::syscall_routine(crate::syscalls::EXIT_ID); // Call exit
+    println!("SHOULD NEVER BE DISPLAYED");
 }
 
 pub struct Thread {
@@ -48,6 +49,7 @@ pub struct Thread {
     pub started: bool,
     pub rsp: u64,
     pub base_stack: u64,
+    pub is_blocked: bool,
 }
 
 impl Thread {
@@ -60,6 +62,7 @@ impl Thread {
                 started: false,
                 rsp: stack_bottom + STACK_SIZE as u64,
                 base_stack: stack_bottom,
+                is_blocked: false
             }
         }
     }
