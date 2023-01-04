@@ -23,7 +23,7 @@ pub const K_THREAD_ID: ThreadId = ThreadId(0); // Kernel main thread identifier
 
 struct ThreadStream {
     ids: ArrayQueue<ThreadId>,
-    waker: AtomicWaker
+    waker: AtomicWaker,
 }
 
 impl ThreadStream {
@@ -35,9 +35,7 @@ impl ThreadStream {
     }
 
     pub fn register(&mut self, id: ThreadId) {
-        self.ids
-            .push(id)
-            .expect("Thread queue full");
+        self.ids.push(id).expect("Thread queue full");
         self.waker.wake();
     }
 }
@@ -84,12 +82,12 @@ impl Scheduler {
         res
     }
 
-
     pub async fn run(&mut self) {
         while let Some(id) = self.thread_queue.next().await {
-            if let Some(thread) = self.get_thread(id) { // Thread still exists
+            if let Some(thread) = self.get_thread(id) {
+                // Thread still exists
                 unsafe {
-                    (&mut*thread.as_ptr()).run();
+                    (&mut *thread.as_ptr()).run();
                 }
                 self.thread_queue.register(id);
             }

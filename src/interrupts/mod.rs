@@ -53,7 +53,41 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
 }
 
 extern "x86-interrupt" fn syscall_handler_32(_stack_frame: InterruptStackFrame) {
+    let rax: u64;
+    let rbx: u64;
+    let rcx: u64;
+    let rdx: u64;
+    let rsi: u64;
+    let rdi: u64;
+    let rbp: u64;
+    unsafe {
+        asm!(
+            "push rax",
+            "push rbx",
+            "push rcx",
+            "push rdx",
+            "push rsi",
+            "push rdi",
+            "push rbp",
+
+            "pop {rbp}",
+            "pop {rdi}",
+            "pop {rsi}",
+            "pop {rdx}",
+            "pop {rcx}",
+            "pop {rbx}",
+            "pop {rax}",
+            rax = out(reg) rax,
+            rbx = out(reg) rbx,
+            rcx = out(reg) rcx,
+            rdx = out(reg) rdx,
+            rsi = out(reg) rsi,
+            rdi = out(reg) rdi,
+            rbp = out(reg) rbp,
+        )
+    }
     println!("Received syscall");
+    crate::syscalls::syscall_routine(rax);
 }
 
 extern "x86-interrupt" fn page_fault_handler(

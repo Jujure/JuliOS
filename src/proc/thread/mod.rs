@@ -1,7 +1,7 @@
 use crate::println;
 use crate::utils::mutex::AsyncMutex;
 
-use super::scheduler::{SCHEDULER, K_THREAD_ID};
+use super::scheduler::{K_THREAD_ID, SCHEDULER};
 
 use core::arch::asm;
 use core::sync::atomic::{AtomicU64, Ordering};
@@ -25,34 +25,21 @@ impl ThreadId {
     }
 }
 
-pub fn exit() {
-    println!("Exiting thread");
-    {
-        let mut scheduler = SCHEDULER.try_lock().unwrap();
-        scheduler.exit(*RUNNING_THREAD.try_lock().unwrap());
-    } // Drop scheduler mutex guard
-
-    resume_k_thread();
-}
-
-pub fn resume_k_thread() {
+pub async fn resume_k_thread() {
     let k_thread: *mut Thread;
     {
-        let mut scheduler = SCHEDULER.try_lock().unwrap();
-        k_thread = scheduler
-            .get_thread(K_THREAD_ID)
-            .unwrap()
-            .as_ptr();
+        let mut scheduler = SCHEDULER.lock().await;
+        k_thread = scheduler.get_thread(K_THREAD_ID).unwrap().as_ptr();
     } // Drop scheduler mutex guard
 
     unsafe {
-        (&mut* k_thread).run();
+        (&mut *k_thread).run();
     }
 }
 
 pub fn routine() {
     println!("Routine executed");
-    exit();
+    crate::syscalls::syscall_routine(crate::syscalls::EXIT_ID); // Call exit
 }
 
 pub struct Thread {
@@ -60,7 +47,7 @@ pub struct Thread {
     pub entry_point: u64,
     pub started: bool,
     pub rsp: u64,
-    pub base_stack: u64
+    pub base_stack: u64,
 }
 
 impl Thread {
@@ -79,7 +66,10 @@ impl Thread {
 
     pub fn exit(&self) {
         unsafe {
-            dealloc(self.base_stack as *mut u8, Layout::new::<[u8; STACK_SIZE]>());
+            dealloc(
+                self.base_stack as *mut u8,
+                Layout::new::<[u8; STACK_SIZE]>(),
+            );
         }
     }
 
@@ -98,8 +88,8 @@ impl Thread {
                     out = out(reg) current_rsp, // Save thread rsp
                 );
                 current_thread.borrow_mut().rsp = current_rsp;
-            }
-            else { // Thread does not exists anymore
+            } else {
+                // Thread does not exists anymore
                 *current_thread_guard = self.id; // change running thread
                 asm!( // Just switch to new thead without saving registers
                     "push {rsp}", // Set stack pointer to the new thread
