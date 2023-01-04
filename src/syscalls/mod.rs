@@ -23,9 +23,9 @@ pub struct SyscallContext {
 
 impl SyscallContext {
     pub async fn run(&mut self) {
-        println!("Running async syscall runner");
+        println!("Running async syscall runner for {:?}", self.id);
         self.dispatch().await;
-        println!("Syscall end, unblocking thread");
+        println!("Syscall {:?} end, unblocking thread", self.id);
         SCHEDULER.lock().await.unblock(self.thread_id);
     }
 
@@ -43,7 +43,7 @@ async fn syscall_runner(context: SyscallContextT) {
 }
 
 pub fn syscall_routine(syscall_id: SyscallId) -> u64 {
-    println!("Running syscall");
+    println!("Running syscall interrupt handler");
     let context: SyscallContextT = Arc::new(RefCell::new(SyscallContext {
         id: syscall_id,
         res: 0,
