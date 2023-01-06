@@ -5,6 +5,7 @@ use core::sync::atomic::{AtomicU64, Ordering};
 use core::task::{Context, Poll};
 
 pub mod executor;
+pub mod yield_executor;
 pub mod keyboard;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

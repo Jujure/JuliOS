@@ -1,7 +1,7 @@
 use crate::println;
 use crate::proc::thread::{resume_k_thread, RUNNING_THREAD};
 use crate::proc::scheduler::SCHEDULER;
-use crate::task::executor::EXECUTOR;
+use crate::task::yield_executor::YieldExecutor;
 use crate::task::Task;
 
 pub use ids::*;
@@ -25,8 +25,6 @@ impl SyscallContext {
     pub async fn run(&mut self) {
         println!("Running async syscall runner for {:?}", self.id);
         self.dispatch().await;
-        println!("Syscall {:?} end, unblocking thread", self.id);
-        SCHEDULER.lock().await.unblock(self.thread_id);
     }
 
     pub async fn dispatch(&mut self) {
@@ -51,18 +49,9 @@ pub fn syscall_routine(syscall_id: SyscallId) -> u64 {
     }));
     
     println!("Spawning async syscall runner");
-    EXECUTOR
-        .try_lock()
-        .unwrap()
-        .spawn(Task::new(syscall_runner(context.clone())));
-
-    println!("Blocking thread");
-    SCHEDULER
-        .try_lock()
-        .unwrap()
-        .block(context.borrow().thread_id);
-    println!("Returning to scheduler");
-    resume_k_thread();
+    let mut executor = YieldExecutor::new(context.borrow().thread_id);
+    executor.spawn(Task::new(syscall_runner(context.clone())));
+    executor.run();
 
     let res = context.borrow().res;
     res
