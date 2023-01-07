@@ -11,6 +11,7 @@ use futures_util::task::AtomicWaker;
 #[derive(Clone)]
 struct Lock {
     lock: Arc<AtomicBool>,
+    // TODO: Make a queue of wakers
     waker: Arc<AtomicWaker>,
 }
 

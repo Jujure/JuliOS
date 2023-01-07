@@ -15,6 +15,7 @@ use futures_util::task::AtomicWaker;
 use lazy_static::lazy_static;
 
 lazy_static! {
+    // TODO: put this in a spin mutex instead
     pub static ref SCHEDULER: AsyncMutex<Scheduler> = AsyncMutex::new(Scheduler::new());
 }
 
@@ -23,6 +24,7 @@ pub type Threadt = Arc<RefCell<Thread>>;
 pub const K_THREAD_ID: ThreadId = ThreadId(0); // Kernel main thread identifier
 
 struct ThreadStream {
+    // TODO: add the double scheduler queue
     ids: ArrayQueue<ThreadId>,
     waker: AtomicWaker,
 }

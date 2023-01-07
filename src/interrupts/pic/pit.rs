@@ -9,6 +9,7 @@ pub fn gettick() -> u64 {
 }
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    // TODO: thread preemption
     unsafe {
         TICKS += 1;
         PICS.lock()
